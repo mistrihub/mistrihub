@@ -5,7 +5,8 @@ export type CategorySlug =
   | "carpenter"
   | "mechanic"
   | "painter"
-  | "ac-repair";
+  | "graphic designer"
+  | "ac-repair/technician";
 
 export type Category = {
   id: string;
