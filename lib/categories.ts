@@ -42,5 +42,11 @@ export const categories: Category[] = [
     name: "AC Repair",
     slug: "ac-repair",
     description: "AC service, gas refill, installation, and breakdown fixes"
+  },
+  {
+    id: "cat-Welder",
+    name: "Welder",
+    slug: "welder",
+    description: "Metal cutting, joining, TIG/MIG welding, blueprint reading, and joint inspections."
   }
 ];
