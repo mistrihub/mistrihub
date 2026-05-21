@@ -44,9 +44,9 @@ export const categories: Category[] = [
     description: "AC service, gas refill, installation, and breakdown fixes"
   },
   {
-    id: "cat-Welder",
-    name: "Welder",
-    slug: "welder",
+    id: "cat-graphic desiner",
+    name: "Graphic Desiner",
+    slug: "graphic desiner",
     description: "Metal cutting, joining, TIG/MIG welding, blueprint reading, and joint inspections."
   }
 ];
