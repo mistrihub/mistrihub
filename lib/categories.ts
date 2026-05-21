@@ -47,6 +47,6 @@ export const categories: Category[] = [
     id: "cat-graphic-designer",
     name: "Graphic Designer",
     slug: "graphic-designer",
-    description: "Logo design, banners, photo editing, and digital illustration."
+    description: "Logo design, banners, photo editing, and digital illustration"
   }
 ];
