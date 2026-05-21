@@ -1,0 +1,408 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { ImagePlus, LogOut, Save, UploadCloud } from "lucide-react";
+import { categories } from "@/lib/categories";
+import { hasSupabaseConfig, supabase } from "@/lib/supabase";
+
+type DashboardWorker = {
+  id: string;
+  user_id: string;
+  name: string;
+  category: string;
+  category_slug: string;
+  experience_years: number;
+  rating: number;
+  review_count: number;
+  location: string;
+  city: string;
+  phone: string;
+  whatsapp: string;
+  profile_photo: string;
+  short_description: string;
+  bio: string;
+  service_details: string[];
+  gallery: string[];
+  available_today: boolean;
+  starting_price: number;
+};
+
+const emptyProfile: DashboardWorker = {
+  id: "",
+  user_id: "",
+  name: "",
+  category: "Electrician",
+  category_slug: "electrician",
+  experience_years: 1,
+  rating: 0,
+  review_count: 0,
+  location: "",
+  city: "",
+  phone: "",
+  whatsapp: "",
+  profile_photo: "",
+  short_description: "",
+  bio: "",
+  service_details: [],
+  gallery: [],
+  available_today: true,
+  starting_price: 299
+};
+
+function slugifyFileName(fileName: string) {
+  return fileName.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+}
+
+export function DashboardClient() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<DashboardWorker>(emptyProfile);
+  const [servicesText, setServicesText] = useState("");
+  const [galleryText, setGalleryText] = useState("");
+  const [status, setStatus] = useState("Loading dashboard...");
+  const [saving, setSaving] = useState(false);
+
+  const publicProfileUrl = useMemo(() => {
+    return profile.id ? `/workers/${profile.id}` : "";
+  }, [profile.id]);
+
+  useEffect(() => {
+    async function load() {
+      if (!hasSupabaseConfig || !supabase) {
+        setStatus("Add Supabase keys to .env.local to enable the dashboard.");
+        return;
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentSession = sessionData.session;
+      setSession(currentSession);
+
+      if (!currentSession) {
+        setStatus("Please login to manage your worker profile.");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("workers")
+        .select("*")
+        .eq("user_id", currentSession.user.id)
+        .maybeSingle();
+
+      if (error) {
+        setStatus(error.message);
+        return;
+      }
+
+      const nextProfile = data
+        ? (data as DashboardWorker)
+        : {
+            ...emptyProfile,
+            id: crypto.randomUUID(),
+            user_id: currentSession.user.id
+          };
+
+      setProfile(nextProfile);
+      setServicesText(nextProfile.service_details.join("\n"));
+      setGalleryText(nextProfile.gallery.join("\n"));
+      setStatus(data ? "Profile loaded." : "Create your first worker profile.");
+    }
+
+    load();
+  }, []);
+
+  function updateField<Key extends keyof DashboardWorker>(key: Key, value: DashboardWorker[Key]) {
+    setProfile((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateCategory(slug: string) {
+    const selected = categories.find((category) => category.slug === slug) ?? categories[0];
+    setProfile((current) => ({
+      ...current,
+      category: selected.name,
+      category_slug: selected.slug
+    }));
+  }
+
+  async function uploadFile(file: File, folder: "profile" | "gallery") {
+    if (!supabase || !session) {
+      setStatus("Login before uploading images.");
+      return "";
+    }
+
+    const path = `${session.user.id}/${folder}/${Date.now()}-${slugifyFileName(file.name)}`;
+    const { error } = await supabase.storage.from("worker-images").upload(path, file, {
+      cacheControl: "3600",
+      upsert: true
+    });
+
+    if (error) {
+      setStatus(error.message);
+      return "";
+    }
+
+    const { data } = supabase.storage.from("worker-images").getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function onProfilePhotoChange(fileList: FileList | null) {
+    const file = fileList?.[0];
+    if (!file) return;
+
+    setStatus("Uploading profile photo...");
+    const publicUrl = await uploadFile(file, "profile");
+    if (publicUrl) {
+      updateField("profile_photo", publicUrl);
+      setStatus("Profile photo uploaded.");
+    }
+  }
+
+  async function onGalleryChange(fileList: FileList | null) {
+    const files = Array.from(fileList ?? []);
+    if (files.length === 0) return;
+
+    setStatus("Uploading gallery images...");
+    const uploaded = await Promise.all(files.map((file) => uploadFile(file, "gallery")));
+    const publicUrls = uploaded.filter(Boolean);
+    const nextGallery = [...profile.gallery, ...publicUrls];
+
+    updateField("gallery", nextGallery);
+    setGalleryText(nextGallery.join("\n"));
+    setStatus("Gallery images uploaded.");
+  }
+
+  async function saveProfile() {
+    if (!supabase || !session) {
+      setStatus("Please login before saving.");
+      return;
+    }
+
+    setSaving(true);
+    const serviceDetails = servicesText
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const gallery = galleryText
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    const payload = {
+      id: profile.id,
+      user_id: session.user.id,
+      name: profile.name,
+      category: profile.category,
+      category_slug: profile.category_slug,
+      experience_years: profile.experience_years,
+      location: profile.location,
+      city: profile.city,
+      phone: profile.phone || `+${profile.whatsapp}`,
+      whatsapp: profile.whatsapp,
+      short_description: profile.short_description,
+      bio: profile.bio,
+      service_details: serviceDetails,
+      gallery,
+      profile_photo:
+        profile.profile_photo ||
+        "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=600&q=80",
+      available_today: profile.available_today,
+      starting_price: profile.starting_price
+    };
+
+    const { error } = await supabase.from("workers").upsert(payload, { onConflict: "user_id" });
+    setSaving(false);
+
+    if (error) {
+      setStatus(error.message);
+      return;
+    }
+
+    setProfile((current) => ({ ...current, ...payload }));
+    setStatus("Profile saved. Your public listing is updated.");
+  }
+
+  async function logout() {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setSession(null);
+    setStatus("Logged out.");
+  }
+
+  if (!hasSupabaseConfig) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
+        <h2 className="text-2xl font-black text-ink">Supabase setup needed</h2>
+        <p className="mt-3 text-slate-600">Add your Supabase URL and anon key to `.env.local`, then restart the dev server.</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
+        <h2 className="text-2xl font-black text-ink">Login required</h2>
+        <p className="mt-3 text-slate-600">{status}</p>
+        <Link
+          href="/auth"
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-lg bg-brand px-5 text-sm font-bold text-white"
+        >
+          Login or sign up
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void saveProfile();
+        }}
+        className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft"
+      >
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wide text-brand">Worker dashboard</p>
+            <h1 className="mt-1 text-3xl font-black text-ink">Manage your profile</h1>
+          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800 disabled:opacity-70"
+          >
+            <Save className="h-4 w-4" aria-hidden="true" />
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Full name">
+            <input value={profile.name} onChange={(event) => updateField("name", event.target.value)} className="input" required />
+          </Field>
+          <Field label="Category">
+            <select value={profile.category_slug} onChange={(event) => updateCategory(event.target.value)} className="input">
+              {categories.map((category) => (
+                <option key={category.id} value={category.slug}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Experience in years">
+            <input
+              type="number"
+              min="0"
+              value={profile.experience_years}
+              onChange={(event) => updateField("experience_years", Number(event.target.value))}
+              className="input"
+            />
+          </Field>
+          <Field label="Starting price">
+            <input
+              type="number"
+              min="0"
+              value={profile.starting_price}
+              onChange={(event) => updateField("starting_price", Number(event.target.value))}
+              className="input"
+            />
+          </Field>
+          <Field label="Area / location">
+            <input value={profile.location} onChange={(event) => updateField("location", event.target.value)} className="input" required />
+          </Field>
+          <Field label="City">
+            <input value={profile.city} onChange={(event) => updateField("city", event.target.value)} className="input" required />
+          </Field>
+          <Field label="WhatsApp number">
+            <input value={profile.whatsapp} onChange={(event) => updateField("whatsapp", event.target.value)} className="input" required />
+          </Field>
+          <Field label="Call number">
+            <input value={profile.phone} onChange={(event) => updateField("phone", event.target.value)} className="input" />
+          </Field>
+        </div>
+
+        <Field label="Short card description">
+          <input
+            value={profile.short_description}
+            onChange={(event) => updateField("short_description", event.target.value)}
+            className="input"
+            required
+          />
+        </Field>
+        <Field label="About section">
+          <textarea value={profile.bio} onChange={(event) => updateField("bio", event.target.value)} className="textarea" rows={4} required />
+        </Field>
+        <Field label="Service details, one per line">
+          <textarea value={servicesText} onChange={(event) => setServicesText(event.target.value)} className="textarea" rows={4} />
+        </Field>
+        <Field label="Gallery image URLs, one per line">
+          <textarea value={galleryText} onChange={(event) => setGalleryText(event.target.value)} className="textarea" rows={4} />
+        </Field>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <UploadBox label="Upload profile photo" icon={<UploadCloud className="h-5 w-5" />} onChange={onProfilePhotoChange} />
+          <UploadBox label="Upload gallery images" icon={<ImagePlus className="h-5 w-5" />} multiple onChange={onGalleryChange} />
+        </div>
+      </form>
+
+      <aside className="space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-100">
+            {profile.profile_photo ? (
+              <Image src={profile.profile_photo} alt={profile.name || "Worker profile"} fill className="object-cover" sizes="340px" />
+            ) : null}
+          </div>
+          <h2 className="mt-4 text-xl font-black text-ink">{profile.name || "Your name"}</h2>
+          <p className="mt-1 text-sm font-semibold text-brand">{profile.category}</p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{profile.short_description || "Your profile preview appears here."}</p>
+          {publicProfileUrl ? (
+            <Link
+              href={publicProfileUrl}
+              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg border border-slate-200 text-sm font-bold text-ink"
+            >
+              View public profile
+            </Link>
+          ) : null}
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
+          <p className="font-bold text-ink">Status</p>
+          <p className="mt-2">{status}</p>
+          <button type="button" onClick={logout} className="mt-5 inline-flex items-center gap-2 font-bold text-brand">
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            Logout
+          </button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="mt-4 block">
+      <span className="text-sm font-bold text-slate-700">{label}</span>
+      <span className="mt-2 block">{children}</span>
+    </label>
+  );
+}
+
+function UploadBox({
+  label,
+  icon,
+  multiple,
+  onChange
+}: {
+  label: string;
+  icon: React.ReactNode;
+  multiple?: boolean;
+  onChange: (files: FileList | null) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-bold text-slate-700 transition hover:border-brand">
+      {icon}
+      {label}
+      <input type="file" accept="image/*" multiple={multiple} onChange={(event) => onChange(event.target.files)} className="sr-only" />
+    </label>
+  );
+}
