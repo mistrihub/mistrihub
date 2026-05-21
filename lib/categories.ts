@@ -47,6 +47,6 @@ export const categories: Category[] = [
     id: "cat-graphic designer",
     name: "Graphic Designer",
     slug: "graphic designer",
-    description: "Metal cutting, joining, TIG/MIG welding, blueprint reading, and joint inspections."
+    description: "Logo design, banners, photo editing, and digital illustration."
   }
 ];
