@@ -35,7 +35,8 @@ export default async function Home({ searchParams }: HomeProps) {
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-sm font-semibold text-brand">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Trusted local help, one WhatsApp away
+              शहर के सबसे भरोसेमंद लोकल वर्कर प्लेटफॉर्म से जुड़ें।
+              आज ही फ्री में अकाउंट बनाएं और अपने आस-पास काम पाएं।
             </div>
             <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
               Find reliable local workers near you in India.
