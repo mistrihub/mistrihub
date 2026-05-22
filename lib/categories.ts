@@ -44,6 +44,12 @@ export const categories: Category[] = [
     description: "AC service, gas refill, installation, and breakdown fixes"
   },
   {
+    id: "cat-welder",
+    name: "Welder",
+    slug: "welder",
+    description: "Gate, grill, welding repair, and metal fabrication"
+  },
+  {
     id: "cat-graphic-designer",
     name: "Graphic Designer",
     slug: "graphic-designer",
