@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Car, Drill, Fan, Hammer, Paintbrush, PlugZap, Wrench, Pentool } from "lucide-react";
+import { Car, Drill, Fan, Hammer, Paintbrush, PlugZap, Wrench, Paintbrush } from "lucide-react";
 import { categories } from "@/lib/categories";
 
 const icons = {
