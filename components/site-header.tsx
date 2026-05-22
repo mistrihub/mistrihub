@@ -5,16 +5,16 @@ import { LayoutDashboard, MapPin, UserPlus } from "lucide-react";
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+        <Link href="/" className="relative block h-12 w-44 shrink-0 sm:h-14 sm:w-56" aria-label="MistriHub home">
           <Image
-            src="/logo.png"
-            alt="MistriHub logo"
-            width={44}
-            height={44}
-            className="h-11 w-11 rounded-lg object-contain"
+            src="/header-logo.png"
+            alt="MistriHub"
+            fill
+            priority
+            className="object-contain object-left"
+            sizes="(min-width: 640px) 224px, 176px"
           />
-          <span className="text-xl font-bold tracking-tight text-ink">MistriHub</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
           <Link href="/#categories">Categories</Link>
