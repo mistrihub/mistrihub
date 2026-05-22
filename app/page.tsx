@@ -38,8 +38,8 @@ export default async function Home({ searchParams }: HomeProps) {
               शहर के सबसे भरोसेमंद लोकल वर्कर प्लेटफॉर्म से जुड़ें।
               आज ही फ्री में अकाउंट बनाएं और अपने आस-पास काम पाएं।
             </div>
-            <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
-              Find reliable local workers near you in India.
+            <h1 className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
+              Find Trusted Local Workers In Your City.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
               Search electricians, plumbers, drivers, carpenters, mechanics, painters, and AC repair technicians. Compare profiles and contact directly.
