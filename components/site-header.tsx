@@ -6,14 +6,14 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="relative block h-12 w-44 shrink-0 sm:h-14 sm:w-56" aria-label="MistriHub home">
+        <Link href="/" className="relative block h-16 w-60 shrink-0 sm:h-20 sm:w-80 lg:h-24 lg:w-[420px]" aria-label="MistriHub home">
           <Image
             src="/header-logo.png"
             alt="MistriHub"
             fill
             priority
             className="object-contain object-left"
-            sizes="(min-width: 640px) 224px, 176px"
+            sizes="(min-width: 1024px) 420px, (min-width: 640px) 320px, 240px"
           />
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
@@ -47,3 +47,4 @@ export function SiteHeader() {
     </header>
   );
 }
+
