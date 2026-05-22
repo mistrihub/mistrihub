@@ -5,7 +5,7 @@ import { LayoutDashboard, MapPin, UserPlus } from "lucide-react";
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-1 sm:px-6 lg:px-8">
         <Link href="/" className="relative block h-20 w-72 shrink-0 sm:h-24 sm:w-[420px] lg:h-28 lg:w-[520px]" aria-label="MistriHub home">
           <Image
             src="/header-logo.png"
