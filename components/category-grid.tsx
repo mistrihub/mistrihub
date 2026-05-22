@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Car, Drill, Fan, Hammer, Paintbrush, PlugZap, Wrench, Paintbrush } from "lucide-react";
+import { Car, Drill, Fan, Hammer, Paintbrush, PlugZap, Wrench, } from "lucide-react";
 import { categories } from "@/lib/categories";
 
 const icons = {
@@ -10,6 +10,7 @@ const icons = {
   mechanic: Drill,
   painter: Paintbrush,
   "ac-repair": Fan,
+  welder: Hammer,
   "graphic-designer": Paintbrush
 };
 
