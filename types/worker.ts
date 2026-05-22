@@ -6,6 +6,7 @@ export type CategorySlug =
   | "mechanic"
   | "painter"
   | "ac-repair"
+  | "welder"
   | "graphic-designer";
 
 export type Category = {
