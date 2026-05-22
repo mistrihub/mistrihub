@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { LayoutDashboard, MapPin, UserPlus } from "lucide-react";
 
@@ -6,9 +7,13 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand text-sm font-bold text-white">
-            MH
-          </span>
+          <Image
+            src="/logo.png"
+            alt="MistriHub logo"
+            width={44}
+            height={44}
+            className="h-11 w-11 rounded-lg object-contain"
+          />
           <span className="text-xl font-bold tracking-tight text-ink">MistriHub</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
