@@ -10,7 +10,7 @@ const icons = {
   mechanic: Drill,
   painter: Paintbrush,
   "ac-repair": Fan,
-  "graphic-designer": Pentool
+  "graphic-designer": Stylus
 };
 
 export function CategoryGrid() {
