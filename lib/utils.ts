@@ -6,7 +6,7 @@ export function cn(...classes: Array<string | false | null | undefined>) {
 
 export function createWhatsAppUrl(worker: Worker) {
   const message = encodeURIComponent(
-    `Hi ${worker.name}, I found your LocalPro profile and need help with ${worker.category}.`
+    `Hi ${worker.name}, I found your MistriHub.In profile and need help with ${worker.category}.`
   );
 
   return `https://wa.me/${worker.whatsapp}?text=${message}`;
