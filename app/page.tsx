@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { CategoryGrid } from "@/components/category-grid";
 import { SearchForm } from "@/components/search-form";
@@ -65,16 +64,7 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-soft">
-            <div className="relative mb-4 aspect-[16/9] overflow-hidden rounded-lg bg-black">
-              <Image
-                src="/banner.png"
-                alt="MistriHub banner"
-                fill
-                priority
-                className="object-contain"
-                sizes="(min-width: 768px) 45vw, 100vw"
-              />
-            </div>
+
             <div className="rounded-lg bg-white p-5">
               <div className="mb-5 flex items-center justify-between">
                 <div>
@@ -157,5 +147,6 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
