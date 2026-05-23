@@ -101,9 +101,9 @@ export default async function Home({ searchParams }: HomeProps) {
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-brand">Categories</p>
-            <h2 className="mt-2 text-3xl font-black text-ink">Book the help you need</h2>
+            <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Book the help you need</h2>
           </div>
-          <Link href="/categories" className="hidden items-center gap-2 text-sm font-bold text-brand sm:inline-flex">
+          <Link href="/categories" className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-brand focus-visible:outline-none focus-visible:ring-0 sm:gap-2">
             See all
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
@@ -177,6 +177,7 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
 
