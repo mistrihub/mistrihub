@@ -98,17 +98,17 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       <section id="categories" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-brand">Categories</p>
-            <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Book the help you need</h2>
-          </div>
-          <Link href="/categories" className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-brand focus-visible:outline-none focus-visible:ring-0 sm:gap-2">
-            See all
+        <div className="mb-6">
+          <p className="text-sm font-bold uppercase tracking-wide text-brand">Categories</p>
+          <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Book the help you need</h2>
+        </div>
+        <CategoryGrid limit={8} />
+        <div className="mt-5 flex justify-center sm:justify-end">
+          <Link href="/categories" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-brand shadow-sm transition hover:text-teal-800 focus-visible:outline-none focus-visible:ring-0">
+            See all categories
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <CategoryGrid limit={8} />
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
@@ -177,6 +177,7 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
 
