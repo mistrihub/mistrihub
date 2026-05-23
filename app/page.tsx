@@ -130,6 +130,36 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       </section>
 
+
+      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide text-brand">Popular searches</p>
+              <h2 className="mt-2 text-2xl font-black text-ink">Local services people search for</h2>
+              <p className="mt-2 text-slate-600">Browse city pages made for real local searches like electricians, plumbers, AC repair, labour, and masonry work.</p>
+            </div>
+            <Link href="/services" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 text-sm font-bold text-ink transition hover:border-brand">
+              View service pages
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {[
+              ["Electrician in Delhi", "/services/electrician/delhi"],
+              ["Plumber in Mumbai", "/services/plumber/mumbai"],
+              ["AC Repair in Bengaluru", "/services/ac-repair/bengaluru"],
+              ["Helper / Labour in Delhi", "/services/helper-labour/delhi"],
+              ["Mason / Plaster in Pune", "/services/mason-plaster/pune"],
+              ["Carpenter in Hyderabad", "/services/carpenter/hyderabad"]
+            ].map(([label, href]) => (
+              <Link key={href} href={href} className="rounded-full bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:text-brand">
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
       <section id="workers" className="bg-white">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="mb-6">
@@ -147,6 +177,7 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
 
