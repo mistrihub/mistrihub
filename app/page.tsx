@@ -31,16 +31,16 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <>
       <section className="bg-white">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.05fr_0.95fr] md:items-center lg:px-8 lg:py-20">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.05fr_0.95fr] md:items-center lg:px-8 lg:py-16">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-sm font-semibold text-brand">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               Trusted local help, one WhatsApp away
             </div>
-            <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
+            <h1 className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
               Find reliable local workers near you in India.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
               Search electricians, plumbers, drivers, carpenters, mechanics, painters, and AC repair technicians. Compare profiles and contact directly.
             </p>
             <div className="mt-8">
@@ -63,7 +63,7 @@ export default async function Home({ searchParams }: HomeProps) {
               </span>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-soft">
+          <div className="hidden rounded-xl bg-slate-50 p-4 shadow-soft md:block">
 
             <div className="rounded-lg bg-white p-5">
               <div className="mb-5 flex items-center justify-between">
@@ -78,7 +78,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   <Link
                     key={worker.id}
                     href={`/workers/${worker.id}`}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3 transition hover:border-brand"
+                    className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 transition hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-0"
                   >
                     <div>
                       <p className="font-bold text-ink">{worker.name}</p>
@@ -112,7 +112,7 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
+        <div className="rounded-xl bg-white p-5 shadow-soft sm:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-brand">Nearby discovery</p>
@@ -132,14 +132,14 @@ export default async function Home({ searchParams }: HomeProps) {
 
 
       <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
+        <div className="rounded-xl bg-slate-50 p-5 sm:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-brand">Popular searches</p>
               <h2 className="mt-2 text-2xl font-black text-ink">Local services people search for</h2>
               <p className="mt-2 text-slate-600">Browse city pages made for real local searches like electricians, plumbers, AC repair, labour, and masonry work.</p>
             </div>
-            <Link href="/services" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 text-sm font-bold text-ink transition hover:border-brand">
+            <Link href="/services" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-ink shadow-sm transition hover:text-brand focus-visible:outline-none focus-visible:ring-0">
               View service pages
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
@@ -177,6 +177,7 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
 
