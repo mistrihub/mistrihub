@@ -9,6 +9,7 @@ export function SiteFooter() {
           <p>Simple worker discovery for Indian local services.</p>
         </div>
         <div className="flex gap-4">
+          <Link href="/services">Services</Link>
           <Link href="/categories">Categories</Link>
           <Link href="/#workers">Featured</Link>
           <Link href="/about">About</Link>
@@ -20,4 +21,5 @@ export function SiteFooter() {
     </footer>
   );
 }
+
 
