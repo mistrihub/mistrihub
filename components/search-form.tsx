@@ -26,7 +26,7 @@ export function SearchForm() {
   return (
     <form
       action={onSubmit}
-      className="grid gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-soft md:grid-cols-[1fr_1fr_140px_170px_auto]"
+      className="grid gap-2 rounded-xl bg-white p-3 shadow-soft sm:gap-3 md:grid-cols-[1fr_1fr_140px_170px_auto]"
     >
       <label className="sr-only" htmlFor="category">
         Category
@@ -35,7 +35,7 @@ export function SearchForm() {
         id="category"
         name="category"
         defaultValue={searchParams.get("category") ?? ""}
-        className="h-12 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand"
+        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="">All categories</option>
         {categories.map((category) => (
@@ -52,7 +52,7 @@ export function SearchForm() {
         name="location"
         defaultValue={searchParams.get("location") ?? ""}
         placeholder="Enter city or area"
-        className="h-12 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 outline-none focus:border-brand"
+        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       />
       <label className="sr-only" htmlFor="rating">
         Rating
@@ -61,7 +61,7 @@ export function SearchForm() {
         id="rating"
         name="rating"
         defaultValue={searchParams.get("rating") ?? ""}
-        className="h-12 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand"
+        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="">Any rating</option>
         <option value="4">4.0+</option>
@@ -75,20 +75,21 @@ export function SearchForm() {
         id="sort"
         name="sort"
         defaultValue={searchParams.get("sort") ?? "rating"}
-        className="h-12 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand"
+        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="rating">Top rated</option>
         <option value="experience">Most experienced</option>
         <option value="newest">Newest</option>
       </select>
-      <button className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800">
+      <button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800 sm:h-12">
         <Search className="h-4 w-4" aria-hidden="true" />
         Search
       </button>
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 md:col-span-5">
+      <div className="hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex md:col-span-5">
         <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
         Search by category and location, then filter by rating or sort by experience.
       </div>
     </form>
   );
 }
+

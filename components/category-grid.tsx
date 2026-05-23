@@ -17,7 +17,7 @@ const icons: Record<CategorySlug, typeof PlugZap> = {
 
 export function CategoryGrid({ limit }: { limit?: number }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {categories.slice(0, limit).map((category) => {
         const Icon = icons[category.slug];
 
@@ -25,16 +25,17 @@ export function CategoryGrid({ limit }: { limit?: number }) {
           <Link
             key={category.id}
             href={`/?category=${category.slug}#workers`}
-            className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-soft"
+            className="group rounded-lg bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft sm:p-5"
           >
-            <div className="mb-4 grid h-11 w-11 place-items-center rounded-lg bg-teal-50 text-brand">
+            <div className="mb-3 grid h-10 w-10 place-items-center rounded-lg bg-teal-50 text-brand sm:mb-4 sm:h-11 sm:w-11">
               <Icon className="h-5 w-5" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-ink">{category.name}</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{category.description}</p>
+            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">{category.description}</p>
           </Link>
         );
       })}
     </div>
   );
 }
+

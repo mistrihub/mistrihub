@@ -13,8 +13,8 @@ export function SiteHeader() {
             width={862}
             height={365}
             priority
-            className="h-auto w-40 max-w-[46vw] sm:w-72 lg:w-80"
-            sizes="(min-width: 1024px) 320px, (min-width: 640px) 288px, 160px"
+            className="h-auto w-36 max-w-[42vw] sm:w-72 lg:w-80"
+            sizes="(min-width: 1024px) 320px, (min-width: 640px) 288px, 144px"
           />
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
@@ -31,14 +31,14 @@ export function SiteHeader() {
           </div>
           <Link
             href="/auth"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-brand px-3 text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-auto sm:gap-2 sm:px-3"
           >
             <UserPlus className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Join</span>
           </Link>
           <Link
             href="/dashboard"
-            className="hidden h-10 w-10 items-center justify-center rounded-lg text-ink transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-0 sm:inline-flex"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-ink transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-10"
             aria-label="Worker dashboard"
           >
             <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
@@ -48,6 +48,7 @@ export function SiteHeader() {
     </header>
   );
 }
+
 
 
 
