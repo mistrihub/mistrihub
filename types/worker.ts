@@ -6,8 +6,8 @@ export type CategorySlug =
   | "mechanic"
   | "painter"
   | "ac-repair"
-  | "welder"
-  | "graphic-designer";
+  | "helper-labour"
+  | "mason-plaster";
 
 export type Category = {
   id: string;
