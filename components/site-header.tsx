@@ -4,9 +4,9 @@ import { LayoutDashboard, MapPin, UserPlus } from "lucide-react";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center" aria-label="MistriHub home">
+        <Link href="/" className="flex shrink-0 items-center outline-none focus-visible:outline-none focus-visible:ring-0" aria-label="MistriHub home">
           <Image
             src="/header-logo.png"
             alt="MistriHub"
@@ -38,7 +38,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-ink transition hover:border-brand"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink transition hover:bg-slate-100"
             aria-label="Worker dashboard"
           >
             <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
@@ -48,3 +48,5 @@ export function SiteHeader() {
     </header>
   );
 }
+
+

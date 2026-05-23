@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { ImagePlus, LogOut, Save, UploadCloud } from "lucide-react";
+import { ImagePlus, LogOut, Save, UploadCloud, X } from "lucide-react";
 import { categories } from "@/lib/categories";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 
@@ -29,6 +29,14 @@ type DashboardWorker = {
   gallery: string[];
   available_today: boolean;
   starting_price: number;
+};
+
+type CropDraft = {
+  file: File;
+  objectUrl: string;
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
 };
 
 const emptyProfile: DashboardWorker = {
@@ -56,16 +64,20 @@ const emptyProfile: DashboardWorker = {
 function slugifyFileName(fileName: string) {
   return fileName.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
 }
-async function prepareImageFile(file: File, mode: "profile" | "gallery") {
-  const imageUrl = URL.createObjectURL(file);
-  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+
+function loadBrowserImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => resolve(img);
     img.onerror = reject;
-    img.src = imageUrl;
+    img.src = src;
   });
+}
 
-  const size = mode === "profile" ? 900 : 1400;
+async function prepareGalleryImageFile(file: File) {
+  const imageUrl = URL.createObjectURL(file);
+  const image = await loadBrowserImage(imageUrl);
+  const maxSize = 1400;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
 
@@ -74,19 +86,10 @@ async function prepareImageFile(file: File, mode: "profile" | "gallery") {
     return file;
   }
 
-  if (mode === "profile") {
-    const side = Math.min(image.width, image.height);
-    const sourceX = (image.width - side) / 2;
-    const sourceY = (image.height - side) / 2;
-    canvas.width = size;
-    canvas.height = size;
-    context.drawImage(image, sourceX, sourceY, side, side, 0, 0, size, size);
-  } else {
-    const scale = Math.min(1, size / Math.max(image.width, image.height));
-    canvas.width = Math.round(image.width * scale);
-    canvas.height = Math.round(image.height * scale);
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  }
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  canvas.width = Math.round(image.width * scale);
+  canvas.height = Math.round(image.height * scale);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
   URL.revokeObjectURL(imageUrl);
@@ -94,6 +97,37 @@ async function prepareImageFile(file: File, mode: "profile" | "gallery") {
   if (!blob) return file;
 
   return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+    type: "image/jpeg"
+  });
+}
+
+async function prepareProfileImageFile(crop: CropDraft) {
+  const image = await loadBrowserImage(crop.objectUrl);
+  const outputSize = 900;
+  const previewSize = 360;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) return crop.file;
+
+  const coverScale = Math.max(previewSize / image.width, previewSize / image.height) * crop.zoom;
+  const displayedWidth = image.width * coverScale;
+  const displayedHeight = image.height * coverScale;
+  const left = (previewSize - displayedWidth) / 2 + crop.offsetX;
+  const top = (previewSize - displayedHeight) / 2 + crop.offsetY;
+  const sourceX = Math.max(0, Math.min(image.width - previewSize / coverScale, -left / coverScale));
+  const sourceY = Math.max(0, Math.min(image.height - previewSize / coverScale, -top / coverScale));
+  const sourceSize = Math.min(image.width - sourceX, image.height - sourceY, previewSize / coverScale);
+
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+  context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, outputSize, outputSize);
+
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+
+  if (!blob) return crop.file;
+
+  return new File([blob], crop.file.name.replace(/\.[^.]+$/, ".jpg"), {
     type: "image/jpeg"
   });
 }
@@ -106,6 +140,8 @@ export function DashboardClient() {
   const [galleryText, setGalleryText] = useState("");
   const [status, setStatus] = useState("Loading dashboard...");
   const [saving, setSaving] = useState(false);
+  const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
+  const [cropSaving, setCropSaving] = useState(false);
 
   const publicProfileUrl = useMemo(() => {
     return profile.id ? `/workers/${profile.id}` : "";
@@ -155,6 +191,12 @@ export function DashboardClient() {
     load();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (cropDraft) URL.revokeObjectURL(cropDraft.objectUrl);
+    };
+  }, [cropDraft]);
+
   function updateField<Key extends keyof DashboardWorker>(key: Key, value: DashboardWorker[Key]) {
     setProfile((current) => ({ ...current, [key]: value }));
   }
@@ -189,16 +231,37 @@ export function DashboardClient() {
     return data.publicUrl;
   }
 
-  async function onProfilePhotoChange(fileList: FileList | null) {
+  function onProfilePhotoChange(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) return;
 
-    setStatus("Cropping and uploading profile photo...");
-    const processedFile = await prepareImageFile(file, "profile");
+    setCropDraft((current) => {
+      if (current) URL.revokeObjectURL(current.objectUrl);
+      return {
+        file,
+        objectUrl: URL.createObjectURL(file),
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0
+      };
+    });
+    setStatus("Adjust your profile photo, then upload it.");
+  }
+
+  async function uploadAdjustedProfilePhoto() {
+    if (!cropDraft) return;
+
+    setCropSaving(true);
+    setStatus("Uploading adjusted profile photo...");
+    const processedFile = await prepareProfileImageFile(cropDraft);
     const publicUrl = await uploadFile(processedFile, "profile");
+    setCropSaving(false);
+
     if (publicUrl) {
       updateField("profile_photo", publicUrl);
       setStatus("Profile photo uploaded.");
+      URL.revokeObjectURL(cropDraft.objectUrl);
+      setCropDraft(null);
     }
   }
 
@@ -207,7 +270,7 @@ export function DashboardClient() {
     if (files.length === 0) return;
 
     setStatus("Adjusting and uploading gallery images...");
-    const processedFiles = await Promise.all(files.map((file) => prepareImageFile(file, "gallery")));
+    const processedFiles = await Promise.all(files.map((file) => prepareGalleryImageFile(file)));
     const uploaded = await Promise.all(processedFiles.map((file) => uploadFile(file, "gallery")));
     const publicUrls = uploaded.filter(Boolean);
     const nextGallery = [...profile.gallery, ...publicUrls];
@@ -301,127 +364,197 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void saveProfile();
-        }}
-        className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft"
-      >
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-brand">Worker dashboard</p>
-            <h1 className="mt-1 text-3xl font-black text-ink">Manage your profile</h1>
+    <>
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void saveProfile();
+          }}
+          className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft"
+        >
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide text-brand">Worker dashboard</p>
+              <h1 className="mt-1 text-3xl font-black text-ink">Manage your profile</h1>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Full name">
+              <input value={profile.name} onChange={(event) => updateField("name", event.target.value)} className="input" required />
+            </Field>
+            <Field label="Category">
+              <select value={profile.category_slug} onChange={(event) => updateCategory(event.target.value)} className="input">
+                {categories.map((category) => (
+                  <option key={category.id} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Experience in years">
+              <input
+                type="number"
+                min="0"
+                value={profile.experience_years || ""}
+                onChange={(event) => updateField("experience_years", event.target.value === "" ? 0 : Number(event.target.value))}
+                className="input"
+              />
+            </Field>
+            <Field label="Starting price">
+              <input
+                type="number"
+                min="0"
+                value={profile.starting_price || ""}
+                onChange={(event) => updateField("starting_price", event.target.value === "" ? 0 : Number(event.target.value))}
+                className="input"
+              />
+            </Field>
+            <Field label="Area / location">
+              <input value={profile.location} onChange={(event) => updateField("location", event.target.value)} className="input" required />
+            </Field>
+            <Field label="City">
+              <input value={profile.city} onChange={(event) => updateField("city", event.target.value)} className="input" required />
+            </Field>
+            <Field label="WhatsApp number">
+              <input value={profile.whatsapp} onChange={(event) => updateField("whatsapp", event.target.value)} className="input" required />
+            </Field>
+            <Field label="Call number">
+              <input value={profile.phone} onChange={(event) => updateField("phone", event.target.value)} className="input" />
+            </Field>
+          </div>
+
+          <Field label="Short card description">
+            <input
+              value={profile.short_description}
+              onChange={(event) => updateField("short_description", event.target.value)}
+              className="input"
+              required
+            />
+          </Field>
+          <Field label="About section">
+            <textarea value={profile.bio} onChange={(event) => updateField("bio", event.target.value)} className="textarea" rows={4} required />
+          </Field>
+          <Field label="Service details, one per line">
+            <textarea value={servicesText} onChange={(event) => setServicesText(event.target.value)} className="textarea" rows={4} />
+          </Field>
+          <Field label="Gallery image URLs, one per line">
+            <textarea value={galleryText} onChange={(event) => setGalleryText(event.target.value)} className="textarea" rows={4} />
+          </Field>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <UploadBox label="Upload profile photo" icon={<UploadCloud className="h-5 w-5" />} onChange={onProfilePhotoChange} />
+            <UploadBox label="Upload gallery images" icon={<ImagePlus className="h-5 w-5" />} multiple onChange={onGalleryChange} />
+          </div>
+          <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-bold text-white transition hover:bg-teal-800 disabled:opacity-70 sm:w-auto"
+            >
+              <Save className="h-4 w-4" aria-hidden="true" />
+              {saving ? "Saving..." : "Save profile"}
+            </button>
+          </div>
+        </form>
+
+        <aside className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+            <Link
+              href={publicProfileUrl || "/dashboard"}
+              className="relative block aspect-[4/3] overflow-hidden rounded-lg bg-white outline-none focus-visible:outline-none focus-visible:ring-0"
+            >
+              {profile.profile_photo ? (
+                <Image src={profile.profile_photo} alt={profile.name || "Worker profile"} fill className="object-cover" sizes="340px" />
+              ) : null}
+            </Link>
+            <h2 className="mt-4 text-xl font-black text-ink">{profile.name || "Your name"}</h2>
+            <p className="mt-1 text-sm font-semibold text-brand">{profile.category}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{profile.short_description || "Your profile preview appears here."}</p>
+            {publicProfileUrl ? (
+              <Link
+                href={publicProfileUrl}
+                className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg border border-slate-200 text-sm font-bold text-ink"
+              >
+                View public profile
+              </Link>
+            ) : null}
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
+            <p className="font-bold text-ink">Status</p>
+            <p className="mt-2">{status}</p>
+            <button type="button" onClick={logout} className="mt-5 inline-flex items-center gap-2 font-bold text-brand">
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Logout
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      {cropDraft ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 px-4 py-6">
+          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black text-ink">Adjust profile photo</h2>
+                <p className="mt-1 text-sm text-slate-600">Face ko square ke andar set karo, phir upload karo.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  URL.revokeObjectURL(cropDraft.objectUrl);
+                  setCropDraft(null);
+                }}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                aria-label="Close photo adjust"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="mx-auto mt-5 aspect-square w-full max-w-[360px] overflow-hidden rounded-xl bg-slate-100">
+              <Image
+                src={cropDraft.objectUrl}
+                alt="Profile photo preview"
+                width={360}
+                height={360}
+                unoptimized
+                className="h-full w-full object-cover"
+                style={{
+                  transform: `translate(${cropDraft.offsetX}px, ${cropDraft.offsetY}px) scale(${cropDraft.zoom})`,
+                  transformOrigin: "center"
+                }}
+              />
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <CropSlider label="Zoom" min={1} max={3} step={0.05} value={cropDraft.zoom} onChange={(value) => setCropDraft({ ...cropDraft, zoom: value })} />
+              <CropSlider label="Left / Right" min={-120} max={120} step={1} value={cropDraft.offsetX} onChange={(value) => setCropDraft({ ...cropDraft, offsetX: value })} />
+              <CropSlider label="Up / Down" min={-120} max={120} step={1} value={cropDraft.offsetY} onChange={(value) => setCropDraft({ ...cropDraft, offsetY: value })} />
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setCropDraft({ ...cropDraft, zoom: 1, offsetX: 0, offsetY: 0 })}
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 text-sm font-bold text-ink"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={() => void uploadAdjustedProfilePhoto()}
+                disabled={cropSaving}
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-brand px-5 text-sm font-bold text-white disabled:opacity-70"
+              >
+                {cropSaving ? "Uploading..." : "Upload photo"}
+              </button>
+            </div>
           </div>
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Full name">
-            <input value={profile.name} onChange={(event) => updateField("name", event.target.value)} className="input" required />
-          </Field>
-          <Field label="Category">
-            <select value={profile.category_slug} onChange={(event) => updateCategory(event.target.value)} className="input">
-              {categories.map((category) => (
-                <option key={category.id} value={category.slug}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Experience in years">
-            <input
-              type="number"
-              min="0"
-              value={profile.experience_years || ""}
-              onChange={(event) => updateField("experience_years", event.target.value === "" ? 0 : Number(event.target.value))}
-              className="input"
-            />
-          </Field>
-          <Field label="Starting price">
-            <input
-              type="number"
-              min="0"
-              value={profile.starting_price || ""}
-              onChange={(event) => updateField("starting_price", event.target.value === "" ? 0 : Number(event.target.value))}
-              className="input"
-            />
-          </Field>
-          <Field label="Area / location">
-            <input value={profile.location} onChange={(event) => updateField("location", event.target.value)} className="input" required />
-          </Field>
-          <Field label="City">
-            <input value={profile.city} onChange={(event) => updateField("city", event.target.value)} className="input" required />
-          </Field>
-          <Field label="WhatsApp number">
-            <input value={profile.whatsapp} onChange={(event) => updateField("whatsapp", event.target.value)} className="input" required />
-          </Field>
-          <Field label="Call number">
-            <input value={profile.phone} onChange={(event) => updateField("phone", event.target.value)} className="input" />
-          </Field>
-        </div>
-
-        <Field label="Short card description">
-          <input
-            value={profile.short_description}
-            onChange={(event) => updateField("short_description", event.target.value)}
-            className="input"
-            required
-          />
-        </Field>
-        <Field label="About section">
-          <textarea value={profile.bio} onChange={(event) => updateField("bio", event.target.value)} className="textarea" rows={4} required />
-        </Field>
-        <Field label="Service details, one per line">
-          <textarea value={servicesText} onChange={(event) => setServicesText(event.target.value)} className="textarea" rows={4} />
-        </Field>
-        <Field label="Gallery image URLs, one per line">
-          <textarea value={galleryText} onChange={(event) => setGalleryText(event.target.value)} className="textarea" rows={4} />
-        </Field>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <UploadBox label="Upload profile photo" icon={<UploadCloud className="h-5 w-5" />} onChange={onProfilePhotoChange} />
-          <UploadBox label="Upload gallery images" icon={<ImagePlus className="h-5 w-5" />} multiple onChange={onGalleryChange} />
-        </div>        <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-bold text-white transition hover:bg-teal-800 disabled:opacity-70 sm:w-auto"
-          >
-            <Save className="h-4 w-4" aria-hidden="true" />
-            {saving ? "Saving..." : "Save profile"}
-          </button>
-        </div>      </form>
-
-      <aside className="space-y-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
-          <Link href={publicProfileUrl || "/dashboard"} className="relative block aspect-[4/3] overflow-hidden rounded-lg bg-slate-100">
-            {profile.profile_photo ? (
-              <Image src={profile.profile_photo} alt={profile.name || "Worker profile"} fill className="object-cover" sizes="340px" />
-            ) : null}
-          </Link>
-          <h2 className="mt-4 text-xl font-black text-ink">{profile.name || "Your name"}</h2>
-          <p className="mt-1 text-sm font-semibold text-brand">{profile.category}</p>
-          <p className="mt-3 text-sm leading-6 text-slate-600">{profile.short_description || "Your profile preview appears here."}</p>
-          {publicProfileUrl ? (
-            <Link
-              href={publicProfileUrl}
-              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg border border-slate-200 text-sm font-bold text-ink"
-            >
-              View public profile
-            </Link>
-          ) : null}
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
-          <p className="font-bold text-ink">Status</p>
-          <p className="mt-2">{status}</p>
-          <button type="button" onClick={logout} className="mt-5 inline-flex items-center gap-2 font-bold text-brand">
-            <LogOut className="h-4 w-4" aria-hidden="true" />
-            Logout
-          </button>
-        </div>
-      </aside>
-    </div>
+      ) : null}
+    </>
   );
 }
 
@@ -454,11 +587,34 @@ function UploadBox({
   );
 }
 
-
-
-
-
-
-
-
+function CropSlider({
+  label,
+  min,
+  max,
+  step,
+  value,
+  onChange
+}: {
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-bold text-slate-700">{label}</span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="mt-2 w-full accent-teal-700"
+      />
+    </label>
+  );
+}
 
