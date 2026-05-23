@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Car, Drill, Fan, Hammer, Paintbrush, PlugZap, Wrench, } from "lucide-react";
+import { Car, Drill, Fan, Hammer, Paintbrush, PlugZap, Wrench } from "lucide-react";
 import { categories } from "@/lib/categories";
+import type { CategorySlug } from "@/types/worker";
 
-const icons = {
+const icons: Record<CategorySlug, typeof PlugZap> = {
   electrician: PlugZap,
   plumber: Wrench,
   driver: Car,
@@ -10,14 +11,14 @@ const icons = {
   mechanic: Drill,
   painter: Paintbrush,
   "ac-repair": Fan,
-  welder: Hammer,
-  "graphic-designer": Paintbrush
+  "helper-labour": Wrench,
+  "mason-plaster": Hammer
 };
 
-export function CategoryGrid() {
+export function CategoryGrid({ limit }: { limit?: number }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {categories.map((category) => {
+      {categories.slice(0, limit).map((category) => {
         const Icon = icons[category.slug];
 
         return (

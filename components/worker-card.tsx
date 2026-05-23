@@ -57,3 +57,4 @@ export function WorkerCard({ worker }: { worker: Worker }) {
     </article>
   );
 }
+

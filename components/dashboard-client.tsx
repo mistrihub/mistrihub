@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { ImagePlus, LogOut, Save, UploadCloud } from "lucide-react";
@@ -55,8 +56,50 @@ const emptyProfile: DashboardWorker = {
 function slugifyFileName(fileName: string) {
   return fileName.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
 }
+async function prepareImageFile(file: File, mode: "profile" | "gallery") {
+  const imageUrl = URL.createObjectURL(file);
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = imageUrl;
+  });
+
+  const size = mode === "profile" ? 900 : 1400;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    URL.revokeObjectURL(imageUrl);
+    return file;
+  }
+
+  if (mode === "profile") {
+    const side = Math.min(image.width, image.height);
+    const sourceX = (image.width - side) / 2;
+    const sourceY = (image.height - side) / 2;
+    canvas.width = size;
+    canvas.height = size;
+    context.drawImage(image, sourceX, sourceY, side, side, 0, 0, size, size);
+  } else {
+    const scale = Math.min(1, size / Math.max(image.width, image.height));
+    canvas.width = Math.round(image.width * scale);
+    canvas.height = Math.round(image.height * scale);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  }
+
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
+  URL.revokeObjectURL(imageUrl);
+
+  if (!blob) return file;
+
+  return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+    type: "image/jpeg"
+  });
+}
 
 export function DashboardClient() {
+  const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<DashboardWorker>(emptyProfile);
   const [servicesText, setServicesText] = useState("");
@@ -150,8 +193,9 @@ export function DashboardClient() {
     const file = fileList?.[0];
     if (!file) return;
 
-    setStatus("Uploading profile photo...");
-    const publicUrl = await uploadFile(file, "profile");
+    setStatus("Cropping and uploading profile photo...");
+    const processedFile = await prepareImageFile(file, "profile");
+    const publicUrl = await uploadFile(processedFile, "profile");
     if (publicUrl) {
       updateField("profile_photo", publicUrl);
       setStatus("Profile photo uploaded.");
@@ -162,8 +206,9 @@ export function DashboardClient() {
     const files = Array.from(fileList ?? []);
     if (files.length === 0) return;
 
-    setStatus("Uploading gallery images...");
-    const uploaded = await Promise.all(files.map((file) => uploadFile(file, "gallery")));
+    setStatus("Adjusting and uploading gallery images...");
+    const processedFiles = await Promise.all(files.map((file) => prepareImageFile(file, "gallery")));
+    const uploaded = await Promise.all(processedFiles.map((file) => uploadFile(file, "gallery")));
     const publicUrls = uploaded.filter(Boolean);
     const nextGallery = [...profile.gallery, ...publicUrls];
 
@@ -219,7 +264,9 @@ export function DashboardClient() {
     }
 
     setProfile((current) => ({ ...current, ...payload }));
-    setStatus("Profile saved. Your public listing is updated.");
+    setStatus("Your registration is successful.");
+    alert("Your registration is successful.");
+    router.push(`/workers/${payload.id}`);
   }
 
   async function logout() {
@@ -267,14 +314,6 @@ export function DashboardClient() {
             <p className="text-sm font-bold uppercase tracking-wide text-brand">Worker dashboard</p>
             <h1 className="mt-1 text-3xl font-black text-ink">Manage your profile</h1>
           </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800 disabled:opacity-70"
-          >
-            <Save className="h-4 w-4" aria-hidden="true" />
-            {saving ? "Saving..." : "Save"}
-          </button>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -294,8 +333,8 @@ export function DashboardClient() {
             <input
               type="number"
               min="0"
-              value={profile.experience_years}
-              onChange={(event) => updateField("experience_years", Number(event.target.value))}
+              value={profile.experience_years || ""}
+              onChange={(event) => updateField("experience_years", event.target.value === "" ? 0 : Number(event.target.value))}
               className="input"
             />
           </Field>
@@ -303,8 +342,8 @@ export function DashboardClient() {
             <input
               type="number"
               min="0"
-              value={profile.starting_price}
-              onChange={(event) => updateField("starting_price", Number(event.target.value))}
+              value={profile.starting_price || ""}
+              onChange={(event) => updateField("starting_price", event.target.value === "" ? 0 : Number(event.target.value))}
               className="input"
             />
           </Field>
@@ -343,16 +382,24 @@ export function DashboardClient() {
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <UploadBox label="Upload profile photo" icon={<UploadCloud className="h-5 w-5" />} onChange={onProfilePhotoChange} />
           <UploadBox label="Upload gallery images" icon={<ImagePlus className="h-5 w-5" />} multiple onChange={onGalleryChange} />
-        </div>
-      </form>
+        </div>        <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-bold text-white transition hover:bg-teal-800 disabled:opacity-70 sm:w-auto"
+          >
+            <Save className="h-4 w-4" aria-hidden="true" />
+            {saving ? "Saving..." : "Save profile"}
+          </button>
+        </div>      </form>
 
       <aside className="space-y-4">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-100">
+          <Link href={publicProfileUrl || "/dashboard"} className="relative block aspect-[4/3] overflow-hidden rounded-lg bg-slate-100">
             {profile.profile_photo ? (
               <Image src={profile.profile_photo} alt={profile.name || "Worker profile"} fill className="object-cover" sizes="340px" />
             ) : null}
-          </div>
+          </Link>
           <h2 className="mt-4 text-xl font-black text-ink">{profile.name || "Your name"}</h2>
           <p className="mt-1 text-sm font-semibold text-brand">{profile.category}</p>
           <p className="mt-3 text-sm leading-6 text-slate-600">{profile.short_description || "Your profile preview appears here."}</p>
@@ -406,3 +453,12 @@ function UploadBox({
     </label>
   );
 }
+
+
+
+
+
+
+
+
+

@@ -11,8 +11,13 @@ export function SiteFooter() {
         <div className="flex gap-4">
           <Link href="/categories">Categories</Link>
           <Link href="/#workers">Featured</Link>
+          <Link href="/about">About</Link>
+          <Link href="/contact">Contact</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
         </div>
       </div>
     </footer>
   );
 }
+
