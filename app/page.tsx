@@ -35,11 +35,10 @@ export default async function Home({ searchParams }: HomeProps) {
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-sm font-semibold text-brand">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              शहर के सबसे भरोसेमंद लोकल वर्कर प्लेटफॉर्म से जुड़ें।
-              आज ही फ्री में अकाउंट बनाएं और अपने आस-पास काम पाएं।
+              Trusted local help, one WhatsApp away
             </div>
-            <h1 className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
-              Find Trusted Local Workers In Your City.
+            <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
+              Find reliable local workers near you in India.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
               Search electricians, plumbers, drivers, carpenters, mechanics, painters, and AC repair technicians. Compare profiles and contact directly.
@@ -109,7 +108,7 @@ export default async function Home({ searchParams }: HomeProps) {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <CategoryGrid />
+        <CategoryGrid limit={8} />
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
@@ -148,6 +147,7 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
 

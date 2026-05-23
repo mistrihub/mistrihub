@@ -5,7 +5,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mistrihub.in";
-const googleAnalyticsId = "G-8TR12XWYDJ";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -14,7 +13,19 @@ export const metadata: Metadata = {
     template: "%s | MistriHub"
   },
   description:
-    "Find electricians, plumbers, drivers, mechanics, painters, carpenters, and AC repair technicians near you in India.",
+    "Find trusted electricians, plumbers, drivers, carpenters, mechanics, painters, AC repair technicians, helpers, labourers, and masons near you in India.",
+  keywords: [
+    "MistriHub",
+    "local workers India",
+    "electrician near me",
+    "plumber near me",
+    "mason near me",
+    "helper labour near me",
+    "AC repair near me"
+  ],
+  alternates: {
+    canonical: siteUrl
+  },
   openGraph: {
     title: "MistriHub",
     description: "Connect with trusted local workers on WhatsApp.",
@@ -30,22 +41,24 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "MistriHub",
+    url: siteUrl,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${siteUrl}/?location={search_term_string}#workers`,
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <html lang="en">
       <body>
-        <Script
-  src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
-  strategy="afterInteractive"
-/>
-
-<Script id="google-analytics" strategy="afterInteractive">
-  {`
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '${googleAnalyticsId}');
-  `}
-</Script>
+        <Script id="mistrihub-jsonld" type="application/ld+json" strategy="beforeInteractive">
+          {JSON.stringify(structuredData)}
+        </Script>
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />
