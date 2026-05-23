@@ -44,15 +44,15 @@ export const categories: Category[] = [
     description: "AC service, gas refill, installation, and breakdown fixes"
   },
   {
-    id: "cat-welder",
-    name: "Welder",
-    slug: "welder",
-    description: "Gate, grill, welding repair, and metal fabrication"
+    id: "cat-helper-labour",
+    name: "Helper / Labour",
+    slug: "helper-labour",
+    description: "Daily helpers, loading, shifting, site support, and general labour"
   },
   {
-    id: "cat-graphic-designer",
-    name: "Graphic Designer",
-    slug: "graphic-designer",
-    description: "Logo design, banners, photo editing, and digital illustration"
+    id: "cat-mason-plaster",
+    name: "Mason / Plaster",
+    slug: "mason-plaster",
+    description: "Brick work, plaster repair, wall finishing, and small civil jobs"
   }
 ];
