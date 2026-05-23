@@ -6,16 +6,20 @@ import { createWhatsAppUrl, formatPrice } from "@/lib/utils";
 
 export function WorkerCard({ worker }: { worker: Worker }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
-      <div className="relative h-52">
+    <article className="overflow-hidden rounded-lg bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
+      <Link
+        href={`/workers/${worker.id}`}
+        className="relative block h-48 bg-white outline-none focus-visible:outline-none focus-visible:ring-0 sm:h-52"
+        aria-label={`View ${worker.name} profile`}
+      >
         <Image src={worker.profilePhoto} alt={worker.name} fill className="object-cover" sizes="(min-width: 1024px) 33vw, 100vw" />
         {worker.availableToday ? (
           <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-brand shadow-sm">
             Available today
           </span>
         ) : null}
-      </div>
-      <div className="p-5">
+      </Link>
+      <div className="p-4 sm:p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-brand">{worker.category}</p>
@@ -36,10 +40,10 @@ export function WorkerCard({ worker }: { worker: Worker }) {
           </p>
           <p className="font-semibold text-ink">Starts at {formatPrice(worker.startingPrice)}</p>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <Link
             href={`/workers/${worker.id}`}
-            className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 text-sm font-bold text-ink transition hover:border-brand"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-ink transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-0"
           >
             View profile
           </Link>
@@ -47,7 +51,7 @@ export function WorkerCard({ worker }: { worker: Worker }) {
             href={createWhatsAppUrl(worker)}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand text-sm font-bold text-white transition hover:bg-teal-800"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0"
           >
             <MessageCircle className="h-4 w-4" aria-hidden="true" />
             WhatsApp
@@ -57,4 +61,3 @@ export function WorkerCard({ worker }: { worker: Worker }) {
     </article>
   );
 }
-

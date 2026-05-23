@@ -191,11 +191,13 @@ export function DashboardClient() {
     load();
   }, []);
 
+  const cropObjectUrl = cropDraft?.objectUrl;
+
   useEffect(() => {
     return () => {
-      if (cropDraft) URL.revokeObjectURL(cropDraft.objectUrl);
+      if (cropObjectUrl) URL.revokeObjectURL(cropObjectUrl);
     };
-  }, [cropDraft]);
+  }, [cropObjectUrl]);
 
   function updateField<Key extends keyof DashboardWorker>(key: Key, value: DashboardWorker[Key]) {
     setProfile((current) => ({ ...current, [key]: value }));
@@ -251,17 +253,22 @@ export function DashboardClient() {
   async function uploadAdjustedProfilePhoto() {
     if (!cropDraft) return;
 
-    setCropSaving(true);
-    setStatus("Uploading adjusted profile photo...");
-    const processedFile = await prepareProfileImageFile(cropDraft);
-    const publicUrl = await uploadFile(processedFile, "profile");
-    setCropSaving(false);
+    try {
+      setCropSaving(true);
+      setStatus("Uploading adjusted profile photo...");
+      const processedFile = await prepareProfileImageFile(cropDraft);
+      const publicUrl = await uploadFile(processedFile, "profile");
 
-    if (publicUrl) {
-      updateField("profile_photo", publicUrl);
-      setStatus("Profile photo uploaded.");
-      URL.revokeObjectURL(cropDraft.objectUrl);
-      setCropDraft(null);
+      if (publicUrl) {
+        updateField("profile_photo", publicUrl);
+        setStatus("Profile photo uploaded.");
+        URL.revokeObjectURL(cropDraft.objectUrl);
+        setCropDraft(null);
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Profile photo upload failed. Please try again.");
+    } finally {
+      setCropSaving(false);
     }
   }
 
@@ -493,8 +500,8 @@ export function DashboardClient() {
       </div>
 
       {cropDraft ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 px-4 py-6">
-          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/65 px-3 py-4 sm:px-4 sm:py-6">
+          <div className="max-h-[94vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-4 shadow-2xl sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black text-ink">Adjust profile photo</h2>
@@ -513,12 +520,12 @@ export function DashboardClient() {
               </button>
             </div>
 
-            <div className="mx-auto mt-5 aspect-square w-full max-w-[360px] overflow-hidden rounded-xl bg-slate-100">
+            <div className="mx-auto mt-5 aspect-square w-full max-w-[280px] overflow-hidden rounded-xl bg-slate-100 sm:max-w-[360px]">
               <Image
                 src={cropDraft.objectUrl}
                 alt="Profile photo preview"
-                width={360}
-                height={360}
+                width={280}
+                height={280}
                 unoptimized
                 className="h-full w-full object-cover"
                 style={{
@@ -617,4 +624,6 @@ function CropSlider({
     </label>
   );
 }
+
+
 

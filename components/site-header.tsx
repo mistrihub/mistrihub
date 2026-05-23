@@ -5,7 +5,7 @@ import { LayoutDashboard, MapPin, UserPlus } from "lucide-react";
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center outline-none focus-visible:outline-none focus-visible:ring-0" aria-label="MistriHub home">
           <Image
             src="/header-logo.png"
@@ -13,8 +13,8 @@ export function SiteHeader() {
             width={862}
             height={365}
             priority
-            className="h-auto w-56 max-w-[56vw] sm:w-72 lg:w-80"
-            sizes="(min-width: 1024px) 320px, (min-width: 640px) 288px, 224px"
+            className="h-auto w-40 max-w-[46vw] sm:w-72 lg:w-80"
+            sizes="(min-width: 1024px) 320px, (min-width: 640px) 288px, 160px"
           />
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
@@ -31,14 +31,14 @@ export function SiteHeader() {
           </div>
           <Link
             href="/auth"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-brand px-3 text-sm font-bold text-white transition hover:bg-teal-800"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-brand px-3 text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0"
           >
             <UserPlus className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Join</span>
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink transition hover:bg-slate-100"
+            className="hidden h-10 w-10 items-center justify-center rounded-lg text-ink transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-0 sm:inline-flex"
             aria-label="Worker dashboard"
           >
             <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
@@ -48,5 +48,6 @@ export function SiteHeader() {
     </header>
   );
 }
+
 
 
