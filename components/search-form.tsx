@@ -26,7 +26,7 @@ export function SearchForm() {
   return (
     <form
       action={onSubmit}
-      className="grid gap-2 rounded-xl bg-white p-3 shadow-soft sm:gap-3 md:grid-cols-[repeat(4,minmax(0,1fr))_auto]"
+      className="grid gap-2 rounded-xl bg-white p-3 shadow-soft sm:gap-3 lg:grid-cols-[repeat(4,minmax(125px,1fr))_auto]"
     >
       <label className="sr-only" htmlFor="category">
         Category
@@ -85,13 +85,14 @@ export function SearchForm() {
         <Search className="h-4 w-4" aria-hidden="true" />
         Search
       </button>
-      <div className="hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex md:col-span-5">
+      <div className="hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex lg:col-span-5">
         <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
         Search by category and location, then filter by rating or sort by experience.
       </div>
     </form>
   );
 }
+
 
 
 
