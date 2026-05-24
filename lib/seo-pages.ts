@@ -11,7 +11,8 @@ export const seoCities = [
   "Ahmedabad",
   "Kolkata",
   "Chennai",
-  "Lucknow"
+  "Lucknow",
+  "Patna"
 ];
 
 export const priorityServiceSlugs: CategorySlug[] = [
@@ -22,19 +23,21 @@ export const priorityServiceSlugs: CategorySlug[] = [
   "painter",
   "mechanic",
   "helper-labour",
-  "mason-plaster"
+  "mason-plaster",
+  "graphic-web-designer"
 ];
 
 export const serviceUseCases: Record<CategorySlug, string[]> = {
   electrician: ["fan installation", "switchboard repair", "MCB checks", "wiring repair", "light fitting"],
   plumber: ["leak repair", "tap fitting", "pipe blockage", "bathroom plumbing", "kitchen plumbing"],
   driver: ["hourly driver", "daily driver", "airport drop", "family travel", "outstation trip"],
-  carpenter: ["furniture repair", "door fitting", "wardrobe repair", "shelf installation", "hinge replacement"],
-  mechanic: ["vehicle inspection", "battery issue", "brake checks", "minor repair", "routine servicing"],
-  painter: ["interior painting", "rental repaint", "wall putty", "texture paint", "touch-up work"],
-  "ac-repair": ["AC service", "gas refill", "cooling issue", "AC installation", "AC uninstallation"],
+  carpenter: ["interior woodwork", "door fitting", "wardrobe repair", "decor panels", "custom furniture"],
+  mechanic: ["bike repair", "auto repair", "battery issue", "brake checks", "routine servicing"],
+  painter: ["interior painting", "wall putty", "POP work", "texture paint", "touch-up work"],
+  "ac-repair": ["AC service", "cooler repair", "fridge repair", "washing machine repair", "cooling issue"],
   "helper-labour": ["daily labour", "loading support", "shifting help", "site helper", "general labour"],
-  "mason-plaster": ["brick work", "wall plaster", "plaster repair", "cement work", "small civil jobs"]
+  "mason-plaster": ["brick work", "wall plaster", "plaster repair", "cement work", "small civil jobs"],
+  "graphic-web-designer": ["logo design", "banner design", "poster design", "website design", "social media creative"]
 };
 
 export function getCategoryBySlug(slug: string) {

@@ -21,27 +21,27 @@ export const categories: Category[] = [
   },
   {
     id: "cat-carpenter",
-    name: "Carpenter",
+    name: "Carpenter Interior & Decorator",
     slug: "carpenter",
-    description: "Furniture repair, fittings, doors, and custom work"
+    description: "Furniture, interiors, decor work, fittings, doors, and custom woodwork"
   },
   {
     id: "cat-mechanic",
-    name: "Mechanic",
+    name: "Mechanic Bike/Auto",
     slug: "mechanic",
-    description: "Two-wheeler and car inspection, repair, and servicing"
+    description: "Bike, auto, two-wheeler inspection, repair, and servicing"
   },
   {
     id: "cat-painter",
-    name: "Painter",
+    name: "Painter Putty/POP",
     slug: "painter",
-    description: "Interior, exterior, touch-ups, texture, and polish"
+    description: "Painting, wall putty, POP, texture, polish, and touch-up work"
   },
   {
     id: "cat-ac-repair",
-    name: "AC Repair",
+    name: "AC/Cooler/Fridge/Washing Machine Repair",
     slug: "ac-repair",
-    description: "AC service, gas refill, installation, and breakdown fixes"
+    description: "AC, cooler, fridge, and washing machine service or repair"
   },
   {
     id: "cat-helper-labour",
@@ -54,5 +54,11 @@ export const categories: Category[] = [
     name: "Mason / Plaster",
     slug: "mason-plaster",
     description: "Brick work, plaster repair, wall finishing, and small civil jobs"
+  },
+  {
+    id: "cat-graphic-web-designer",
+    name: "Graphic/Web Designer",
+    slug: "graphic-web-designer",
+    description: "Logo, banner, poster, website design, and digital creative work"
   }
 ];
