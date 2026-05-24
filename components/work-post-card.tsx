@@ -166,11 +166,11 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   return (
     <article className="overflow-hidden rounded-xl bg-white shadow-sm transition hover:shadow-soft">
       <button type="button" onClick={() => setLightboxOpen(true)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-0" aria-label="Open media full view">
-        <div className="aspect-[4/3] bg-slate-100">
+        <div className="flex max-h-[520px] min-h-48 w-full items-center justify-center bg-black/95">
           {post.mediaType === "video" ? (
-            <video className="h-full w-full object-cover" src={post.mediaUrl} muted playsInline preload="metadata" />
+            <video className="h-auto max-h-[520px] w-auto max-w-full object-contain" src={post.mediaUrl} muted playsInline preload="metadata" />
           ) : (
-            <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+            <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-auto max-h-[520px] w-auto max-w-full object-contain" loading="lazy" decoding="async" />
           )}
         </div>
       </button>
@@ -264,6 +264,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     </article>
   );
 }
+
 
 
 

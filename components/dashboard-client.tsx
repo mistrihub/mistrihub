@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Image from "next/image";
@@ -92,39 +92,6 @@ function loadBrowserImage(src: string) {
   });
 }
 
-async function prepareWorkImageFile(workDraft: WorkDraft) {
-  const image = await loadBrowserImage(workDraft.objectUrl);
-  const outputWidth = 1400;
-  const outputHeight = 788;
-  const previewWidth = 560;
-  const previewHeight = 315;
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
-  if (!context) return workDraft.file;
-
-  const coverScale = Math.max(previewWidth / image.width, previewHeight / image.height) * workDraft.zoom;
-  const displayedWidth = image.width * coverScale;
-  const displayedHeight = image.height * coverScale;
-  const left = (previewWidth - displayedWidth) / 2 + workDraft.offsetX;
-  const top = (previewHeight - displayedHeight) / 2 + workDraft.offsetY;
-  const sourceX = Math.max(0, Math.min(image.width - previewWidth / coverScale, -left / coverScale));
-  const sourceY = Math.max(0, Math.min(image.height - previewHeight / coverScale, -top / coverScale));
-  const sourceWidth = Math.min(image.width - sourceX, previewWidth / coverScale);
-  const sourceHeight = Math.min(image.height - sourceY, previewHeight / coverScale);
-
-  canvas.width = outputWidth;
-  canvas.height = outputHeight;
-  context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, outputWidth, outputHeight);
-
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
-
-  if (!blob) return workDraft.file;
-
-  return new File([blob], workDraft.file.name.replace(/\.[^.]+$/, ".jpg"), {
-    type: "image/jpeg"
-  });
-}
 async function prepareProfileImageFile(crop: CropDraft) {
   const image = await loadBrowserImage(crop.objectUrl);
   const outputSize = 900;
@@ -344,7 +311,7 @@ export function DashboardClient() {
     try {
       setWorkUploading(true);
       setStatus("Uploading work update...");
-      const uploadableFile = workDraft.mediaType === "image" ? await prepareWorkImageFile(workDraft) : workDraft.file;
+      const uploadableFile = workDraft.file;
       const publicUrl = await uploadFile(uploadableFile, "work");
 
       if (!publicUrl) return;
@@ -571,28 +538,14 @@ export function DashboardClient() {
             {workDraft ? (
               <div className="mt-4 rounded-xl bg-white p-3 shadow-sm">
                 <p className="mb-2 text-sm font-bold text-ink">Preview before upload</p>
-                {workDraft.mediaType === "video" ? (
-                  <video src={workDraft.objectUrl} controls playsInline className="aspect-video w-full rounded-lg bg-black object-cover" />
-                ) : (
-                  <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-100">
-                    <img
-                      src={workDraft.objectUrl}
-                      alt="Work update preview"
-                      className="h-full w-full object-cover"
-                      style={{
-                        transform: `translate(${workDraft.offsetX}px, ${workDraft.offsetY}px) scale(${workDraft.zoom})`,
-                        transformOrigin: "center"
-                      }}
-                    />
-                  </div>
-                )}
-                {workDraft.mediaType === "image" ? (
-                  <div className="mt-4 space-y-3">
-                    <CropSlider label="Zoom" min={1} max={3} step={0.05} value={workDraft.zoom} onChange={(value) => setWorkDraft({ ...workDraft, zoom: value })} />
-                    <CropSlider label="Left / Right" min={-160} max={160} step={1} value={workDraft.offsetX} onChange={(value) => setWorkDraft({ ...workDraft, offsetX: value })} />
-                    <CropSlider label="Up / Down" min={-120} max={120} step={1} value={workDraft.offsetY} onChange={(value) => setWorkDraft({ ...workDraft, offsetY: value })} />
-                  </div>
-                ) : null}
+                <div className="flex max-h-[520px] w-full items-center justify-center overflow-hidden rounded-lg bg-black/95">
+                  {workDraft.mediaType === "video" ? (
+                    <video src={workDraft.objectUrl} controls playsInline className="h-auto max-h-[520px] w-auto max-w-full object-contain" />
+                  ) : (
+                    <img src={workDraft.objectUrl} alt="Work update preview" className="h-auto max-h-[520px] w-auto max-w-full object-contain" />
+                  )}
+                </div>
+                <p className="mt-3 text-xs font-semibold text-slate-500">Original photo/video shape will be uploaded. No crop will be applied.</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
@@ -621,11 +574,11 @@ export function DashboardClient() {
                 <p className="text-sm font-black text-ink">Uploaded work updates</p>
                 {workPosts.map((post) => (
                   <div key={post.id} className="flex gap-3 rounded-lg bg-white p-3 shadow-sm">
-                    <div className="h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/90">
                       {post.media_type === "video" ? (
-                        <video src={post.media_url} className="h-full w-full object-cover" />
+                        <video src={post.media_url} className="h-auto max-h-24 w-auto max-w-full object-contain" />
                       ) : (
-                        <img src={post.media_url} alt={post.caption} className="h-full w-full object-cover" />
+                        <img src={post.media_url} alt={post.caption} className="h-auto max-h-24 w-auto max-w-full object-contain" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -815,6 +768,8 @@ function CropSlider({
     </label>
   );
 }
+
+
 
 
 

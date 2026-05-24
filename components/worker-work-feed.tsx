@@ -311,11 +311,11 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
                   className="block w-full bg-slate-100 text-left focus-visible:outline-none focus-visible:ring-0"
                   aria-label="Open work media full view"
                 >
-                  <div className="aspect-video w-full bg-slate-100">
+                  <div className="flex max-h-[680px] min-h-56 w-full items-center justify-center bg-black/95">
                     {post.mediaType === "video" ? (
-                      <video src={post.mediaUrl} muted playsInline preload="metadata" className="h-full w-full bg-black object-cover" />
+                      <video src={post.mediaUrl} muted playsInline preload="metadata" className="h-auto max-h-[680px] w-auto max-w-full object-contain" />
                     ) : (
-                      <img src={post.mediaUrl} alt={post.caption} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                      <img src={post.mediaUrl} alt={post.caption} className="h-auto max-h-[680px] w-auto max-w-full object-contain" loading="lazy" decoding="async" />
                     )}
                   </div>
                 </button>
@@ -435,6 +435,7 @@ function CommentBox({ onSubmit }: { onSubmit: (comment: string) => void }) {
     </form>
   );
 }
+
 
 
 
