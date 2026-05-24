@@ -1,7 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Heart, MessageCircle, Send, Share2, X } from "lucide-react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 import type { WorkPostComment, WorkPostWithWorker } from "@/types/worker";
@@ -56,9 +57,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
           .limit(5)
       ]);
 
-      if (ownLikes && ownLikes.length > 0) {
-        setLiked(true);
-      }
+      if (ownLikes && ownLikes.length > 0) setLiked(true);
 
       if (dbComments) {
         setComments(
@@ -85,10 +84,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     if (!hasSupabaseConfig || !supabase || !visitorId || isDemoPost) return;
 
     const { error } = await supabase.from("work_post_likes").upsert(
-      {
-        post_id: post.id,
-        visitor_id: visitorId
-      },
+      { post_id: post.id, visitor_id: visitorId },
       { onConflict: "post_id,visitor_id", ignoreDuplicates: true }
     );
 
@@ -134,14 +130,8 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     setCounts((current) => ({ ...current, shares: current.shares + 1 }));
 
     if (hasSupabaseConfig && supabase && visitorId && !isDemoPost) {
-      const { error } = await supabase.from("work_post_shares").insert({
-        post_id: post.id,
-        visitor_id: visitorId
-      });
-
-      if (error) {
-        setCounts((current) => ({ ...current, shares: Math.max(current.shares - 1, 0) }));
-      }
+      const { error } = await supabase.from("work_post_shares").insert({ post_id: post.id, visitor_id: visitorId });
+      if (error) setCounts((current) => ({ ...current, shares: Math.max(current.shares - 1, 0) }));
     }
 
     const shareText = `${post.worker.name} work update on MistriHub: ${post.caption}`;
@@ -168,9 +158,13 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
 
       <div className="p-4">
         <div className="flex items-center gap-3">
-          <img src={post.worker.profilePhoto} alt={post.worker.name} className="h-10 w-10 shrink-0 rounded-full object-cover" loading="lazy" />
+          <Link href={`/workers/${post.worker.id}`} className="shrink-0 focus-visible:outline-none focus-visible:ring-0" aria-label={`${post.worker.name} profile`}>
+            <img src={post.worker.profilePhoto} alt={post.worker.name} className="h-10 w-10 rounded-full object-cover" loading="lazy" />
+          </Link>
           <div className="min-w-0">
-            <p className="truncate font-black text-ink">{post.worker.name}</p>
+            <Link href={`/workers/${post.worker.id}`} className="block truncate font-black text-ink hover:text-brand focus-visible:outline-none focus-visible:ring-0">
+              {post.worker.name}
+            </Link>
             <p className="truncate text-xs font-semibold text-slate-500">
               {post.worker.category} in {post.worker.city}
             </p>
@@ -223,20 +217,28 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
 
       {fullViewOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-3 sm:p-6" role="dialog" aria-modal="true">
-          <div className="relative max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-xl bg-black shadow-2xl">
+          <div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between gap-3 bg-white p-3 pr-14">
+              <div className="min-w-0">
+                <p className="truncate font-black text-ink">{post.worker.name}</p>
+                <p className="truncate text-xs font-semibold text-slate-500">{post.caption}</p>
+              </div>
+            </div>
             <button
               type="button"
               onClick={() => setFullViewOpen(false)}
-              className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm transition hover:bg-white"
+              className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-ink shadow-sm transition hover:bg-slate-200"
               aria-label="Close full view"
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
-            {post.mediaType === "video" ? (
-              <video className="max-h-[92vh] w-full bg-black object-contain" src={post.mediaUrl} controls autoPlay playsInline />
-            ) : (
-              <img src={post.mediaUrl} alt={`${post.worker.name} work update full view`} className="max-h-[92vh] w-full object-contain" />
-            )}
+            <div className="bg-black">
+              {post.mediaType === "video" ? (
+                <video className="max-h-[78vh] w-full bg-black object-contain" src={post.mediaUrl} controls autoPlay playsInline />
+              ) : (
+                <img src={post.mediaUrl} alt={`${post.worker.name} work update full view`} className="max-h-[78vh] w-full bg-black object-contain" />
+              )}
+            </div>
           </div>
         </div>
       ) : null}

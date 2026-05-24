@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { ArrowRight, Images } from "lucide-react";
+﻿import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { WorkPostCard } from "@/components/work-post-card";
 import { getAllWorkPosts } from "@/lib/workers";
 
@@ -9,10 +9,6 @@ export async function TopWorkUpdates() {
   return (
     <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
       <div className="mb-6">
-        <p className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-brand">
-          <Images className="h-4 w-4" aria-hidden="true" />
-          Worker updates
-        </p>
         <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Latest work photos & videos</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
           Real work uploaded by local workers. Like, comment, share, or tap any photo/video for full view.
@@ -42,4 +38,5 @@ export async function TopWorkUpdates() {
     </section>
   );
 }
+
 
