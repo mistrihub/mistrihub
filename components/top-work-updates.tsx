@@ -4,7 +4,7 @@ import { WorkPostCard } from "@/components/work-post-card";
 import { getAllWorkPosts } from "@/lib/workers";
 
 export async function TopWorkUpdates() {
-  const posts = await getAllWorkPosts(8);
+  const posts = await getAllWorkPosts(4);
 
   return (
     <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
@@ -14,9 +14,9 @@ export async function TopWorkUpdates() {
             <Images className="h-4 w-4" aria-hidden="true" />
             Worker updates
           </p>
-          <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Top liked work photos & videos</h2>
+          <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Latest work photos & videos</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Real work uploaded by local workers. Visitors can open profiles, follow, like, comment, and share from worker pages.
+            Real work uploaded by local workers. Open any card to see the worker profile and full social updates.
           </p>
         </div>
         <Link href="/work-updates" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-brand shadow-sm transition hover:text-teal-800 focus-visible:outline-none focus-visible:ring-0">
@@ -28,7 +28,7 @@ export async function TopWorkUpdates() {
       {posts.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {posts.map((post) => (
-            <WorkPostCard key={post.id} post={post} />
+            <WorkPostCard key={post.id} post={post} showEngagement={false} />
           ))}
         </div>
       ) : (

@@ -4,7 +4,12 @@ import Link from "next/link";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import type { WorkPostWithWorker } from "@/types/worker";
 
-export function WorkPostCard({ post }: { post: WorkPostWithWorker }) {
+type WorkPostCardProps = {
+  post: WorkPostWithWorker;
+  showEngagement?: boolean;
+};
+
+export function WorkPostCard({ post, showEngagement = true }: WorkPostCardProps) {
   return (
     <article className="overflow-hidden rounded-xl bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
       <Link href={`/workers/${post.worker.id}`} className="block focus-visible:outline-none focus-visible:ring-0">
@@ -34,20 +39,22 @@ export function WorkPostCard({ post }: { post: WorkPostWithWorker }) {
 
         <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-700">{post.caption}</p>
 
-        <div className="mt-4 grid grid-cols-3 gap-2 text-xs font-black text-slate-600">
-          <span className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-50 px-2 py-2 text-rose-700">
-            <Heart className="h-3.5 w-3.5" aria-hidden="true" />
-            {post.likeCount}
-          </span>
-          <span className="inline-flex items-center justify-center gap-1 rounded-lg bg-sky-50 px-2 py-2 text-sky-700">
-            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
-            {post.commentCount}
-          </span>
-          <span className="inline-flex items-center justify-center gap-1 rounded-lg bg-teal-50 px-2 py-2 text-brand">
-            <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
-            {post.shareCount}
-          </span>
-        </div>
+        {showEngagement ? (
+          <div className="mt-4 grid grid-cols-3 gap-2 text-xs font-black text-slate-600">
+            <span className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-50 px-2 py-2 text-rose-700">
+              <Heart className="h-3.5 w-3.5" aria-hidden="true" />
+              {post.likeCount}
+            </span>
+            <span className="inline-flex items-center justify-center gap-1 rounded-lg bg-sky-50 px-2 py-2 text-sky-700">
+              <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+              {post.commentCount}
+            </span>
+            <span className="inline-flex items-center justify-center gap-1 rounded-lg bg-teal-50 px-2 py-2 text-brand">
+              <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
+              {post.shareCount}
+            </span>
+          </div>
+        ) : null}
       </div>
     </article>
   );
