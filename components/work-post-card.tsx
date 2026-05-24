@@ -11,6 +11,11 @@ type WorkPostCardProps = {
   post: WorkPostWithWorker;
 };
 
+type FeedVideoVisibilityDetail = {
+  id: string;
+  ratio: number;
+  video: HTMLVideoElement;
+};
 type CommentRow = {
   id: string;
   post_id: string;
@@ -41,6 +46,55 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   const [counts, setCounts] = useState({ likes: post.likeCount, comments: post.commentCount, shares: post.shareCount });
   const profileUrl = useMemo(() => (typeof window === "undefined" ? `/workers/${post.worker.id}` : `${window.location.origin}/workers/${post.worker.id}`), [post.worker.id]);
   const isDemoPost = post.id.includes("gallery");
+  const postVideoId = `work-video-${post.id}`;
+  useEffect(() => {
+    if (post.mediaType !== "video") return;
+
+    const video = previewVideoRef.current;
+    if (!video) return;
+    const activeVideo = video;
+
+    function playActiveVideo(event: Event) {
+      const detail = (event as CustomEvent<FeedVideoVisibilityDetail>).detail;
+      if (detail.id !== postVideoId) {
+        activeVideo.pause();
+        return;
+      }
+
+      activeVideo.muted = false;
+      activeVideo.volume = 1;
+      void activeVideo.play().catch(() => {
+        activeVideo.muted = true;
+        void activeVideo.play().catch(() => undefined);
+      });
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const ratio = entry?.intersectionRatio ?? 0;
+
+        if (ratio < 0.55) {
+          activeVideo.pause();
+          return;
+        }
+
+        window.dispatchEvent(
+          new CustomEvent<FeedVideoVisibilityDetail>("mistrihub:feed-video-visible", {
+            detail: { id: postVideoId, ratio, video: activeVideo }
+          })
+        );
+      },
+      { threshold: [0, 0.55, 0.75, 0.9] }
+    );
+
+    window.addEventListener("mistrihub:feed-video-visible", playActiveVideo);
+    observer.observe(activeVideo);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("mistrihub:feed-video-visible", playActiveVideo);
+    };
+  }, [post.mediaType, postVideoId]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -265,6 +319,12 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     </article>
   );
 }
+
+
+
+
+
+
 
 
 
