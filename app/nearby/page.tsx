@@ -39,12 +39,12 @@ export default async function NearbyPage({ searchParams }: NearbyPageProps) {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+      <div className="mb-6 rounded-2xl bg-white p-4 shadow-soft sm:p-6">
         <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-center">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-brand">Nearby workers</p>
-            <h1 className="mt-2 text-4xl font-black leading-tight text-ink">Top Rated Nearby Workers</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+            <h1 className="mt-2 text-3xl font-black leading-tight text-ink sm:text-4xl">Top Rated Nearby Workers</h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
               Select a city and category to see the highest-rated local workers first. No live GPS tracking is used.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
@@ -57,17 +57,17 @@ export default async function NearbyPage({ searchParams }: NearbyPageProps) {
               </span>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 rounded-xl bg-slate-50 p-3">
-            <div className="rounded-lg bg-white p-4 text-center">
-              <p className="text-2xl font-black text-ink">{workers.length}</p>
+          <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-2 sm:gap-3 sm:p-3">
+            <div className="rounded-lg bg-white p-3 text-center sm:p-4">
+              <p className="text-xl font-black text-ink sm:text-2xl">{workers.length}</p>
               <p className="mt-1 text-xs font-semibold text-slate-500">Workers</p>
             </div>
-            <div className="rounded-lg bg-white p-4 text-center">
-              <p className="text-2xl font-black text-ink">{topRating || "-"}</p>
+            <div className="rounded-lg bg-white p-3 text-center sm:p-4">
+              <p className="text-xl font-black text-ink sm:text-2xl">{topRating || "-"}</p>
               <p className="mt-1 text-xs font-semibold text-slate-500">Top rating</p>
             </div>
-            <div className="rounded-lg bg-white p-4 text-center">
-              <p className="text-2xl font-black text-ink">{cities.length}</p>
+            <div className="rounded-lg bg-white p-3 text-center sm:p-4">
+              <p className="text-xl font-black text-ink sm:text-2xl">{cities.length}</p>
               <p className="mt-1 text-xs font-semibold text-slate-500">Cities</p>
             </div>
           </div>
@@ -95,3 +95,4 @@ export default async function NearbyPage({ searchParams }: NearbyPageProps) {
     </section>
   );
 }
+
