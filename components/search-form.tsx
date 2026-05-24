@@ -26,7 +26,7 @@ export function SearchForm() {
   return (
     <form
       action={onSubmit}
-      className="grid gap-2 rounded-xl bg-white p-3 shadow-soft sm:gap-3 md:grid-cols-[1.15fr_1fr_140px_170px_auto]"
+      className="grid gap-2 rounded-xl bg-white p-3 shadow-soft sm:gap-3 md:grid-cols-[repeat(4,minmax(0,1fr))_auto]"
     >
       <label className="sr-only" htmlFor="category">
         Category
@@ -81,7 +81,7 @@ export function SearchForm() {
         <option value="experience">Most experienced</option>
         <option value="newest">Newest</option>
       </select>
-      <button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800 sm:h-12">
+      <button className="inline-flex h-11 min-w-28 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800 sm:h-12">
         <Search className="h-4 w-4" aria-hidden="true" />
         Search
       </button>
@@ -92,5 +92,6 @@ export function SearchForm() {
     </form>
   );
 }
+
 
 
