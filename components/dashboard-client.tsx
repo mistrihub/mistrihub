@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { ImagePlus, LogOut, Save, UploadCloud, X } from "lucide-react";
+import { ImagePlus, LogOut, Save, UploadCloud, Video, X } from "lucide-react";
 import { categories } from "@/lib/categories";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 
@@ -138,6 +138,7 @@ export function DashboardClient() {
   const [profile, setProfile] = useState<DashboardWorker>(emptyProfile);
   const [servicesText, setServicesText] = useState("");
   const [galleryText, setGalleryText] = useState("");
+  const [workCaption, setWorkCaption] = useState("");
   const [status, setStatus] = useState("Loading dashboard...");
   const [saving, setSaving] = useState(false);
   const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
@@ -212,7 +213,7 @@ export function DashboardClient() {
     }));
   }
 
-  async function uploadFile(file: File, folder: "profile" | "gallery") {
+  async function uploadFile(file: File, folder: "profile" | "gallery" | "work") {
     if (!supabase || !session) {
       setStatus("Login before uploading images.");
       return "";
@@ -287,6 +288,48 @@ export function DashboardClient() {
     setStatus("Gallery images uploaded.");
   }
 
+
+  async function onWorkPostMediaChange(fileList: FileList | null) {
+    const file = fileList?.[0];
+    if (!file) return;
+
+    if (!profile.id) {
+      setStatus("Save your profile before adding work updates.");
+      return;
+    }
+
+    if (!supabase || !session) {
+      setStatus("Login before uploading work updates.");
+      return;
+    }
+
+    try {
+      setStatus("Uploading work update...");
+      const mediaType = file.type.startsWith("video/") ? "video" : "image";
+      const uploadableFile = mediaType === "image" ? await prepareGalleryImageFile(file) : file;
+      const publicUrl = await uploadFile(uploadableFile, "work");
+
+      if (!publicUrl) return;
+
+      const { error } = await supabase.from("work_posts").insert({
+        worker_id: profile.id,
+        user_id: session.user.id,
+        media_url: publicUrl,
+        media_type: mediaType,
+        caption: workCaption || `${profile.category} work update`
+      });
+
+      if (error) {
+        setStatus(error.message);
+        return;
+      }
+
+      setWorkCaption("");
+      setStatus("Work update uploaded. Open your public profile to see it.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Work update upload failed. Please try again.");
+    }
+  }
   async function saveProfile() {
     if (!supabase || !session) {
       setStatus("Please login before saving.");
@@ -453,6 +496,22 @@ export function DashboardClient() {
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <UploadBox label="Upload profile photo" icon={<UploadCloud className="h-5 w-5" />} onChange={onProfilePhotoChange} />
             <UploadBox label="Upload gallery images" icon={<ImagePlus className="h-5 w-5" />} multiple onChange={onGalleryChange} />
+          </div>
+
+          <div className="mt-5 rounded-xl bg-slate-50 p-4">
+            <p className="text-sm font-black text-ink">Work photo / video update</p>
+            <p className="mt-1 text-sm text-slate-600">Profile par real work proof dikhane ke liye photo ya short video upload karo.</p>
+            <input
+              value={workCaption}
+              onChange={(event) => setWorkCaption(event.target.value)}
+              className="mt-3 h-11 w-full rounded-lg bg-white px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-teal-100"
+              placeholder="Caption, example: Bathroom plumbing repair completed"
+            />
+            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white p-4 text-sm font-bold text-slate-700 shadow-sm transition hover:text-brand">
+              <Video className="h-5 w-5" aria-hidden="true" />
+              Upload work photo or video
+              <input type="file" accept="image/*,video/*" onChange={(event) => onWorkPostMediaChange(event.target.files)} className="sr-only" />
+            </label>
           </div>
           <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
             <button
@@ -624,6 +683,8 @@ function CropSlider({
     </label>
   );
 }
+
+
 
 
 

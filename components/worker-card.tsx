@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, MessageCircle, Star } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import type { Worker } from "@/types/worker";
-import { createWhatsAppUrl, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 
 export function WorkerCard({ worker }: { worker: Worker }) {
   return (
@@ -40,22 +40,13 @@ export function WorkerCard({ worker }: { worker: Worker }) {
           </p>
           <p className="font-semibold text-ink">Starts at {formatPrice(worker.startingPrice)}</p>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="mt-5 flex justify-center">
           <Link
             href={`/workers/${worker.id}`}
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-ink transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-0"
+            className="inline-flex h-11 w-full max-w-48 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0"
           >
             View profile
           </Link>
-          <a
-            href={createWhatsAppUrl(worker)}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0"
-          >
-            <MessageCircle className="h-4 w-4" aria-hidden="true" />
-            WhatsApp
-          </a>
         </div>
       </div>
     </article>
