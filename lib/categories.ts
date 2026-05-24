@@ -1,4 +1,4 @@
-import type { Category } from "@/types/worker";
+﻿import type { Category } from "@/types/worker";
 
 export const categories: Category[] = [
   {
@@ -33,7 +33,7 @@ export const categories: Category[] = [
   },
   {
     id: "cat-painter",
-    name: "Painter Putty/POP",
+    name: "Paint/Putty/POP",
     slug: "painter",
     description: "Painting, wall putty, POP, texture, polish, and touch-up work"
   },
@@ -62,3 +62,4 @@ export const categories: Category[] = [
     description: "Logo, banner, poster, website design, and digital creative work"
   }
 ];
+

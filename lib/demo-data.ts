@@ -1,4 +1,4 @@
-import type { Worker } from "@/types/worker";
+﻿import type { Worker } from "@/types/worker";
 
 const gallery = [
   "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=900&q=80",
@@ -116,7 +116,7 @@ export const demoWorkers: Worker[] = [
     id: "anil-painter-ahmedabad",
     userId: null,
     name: "Anil Patel",
-    category: "Painter Putty/POP",
+    category: "Paint/Putty/POP",
     categorySlug: "painter",
     experienceYears: 7,
     rating: 4.5,
@@ -155,4 +155,5 @@ export const demoWorkers: Worker[] = [
     startingPrice: 399
   }
 ];
+
 
