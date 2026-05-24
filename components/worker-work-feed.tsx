@@ -1,7 +1,7 @@
 ﻿/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { BadgeCheck, Heart, MessageCircle, Send, Share2, TrendingUp, UserPlus, X } from "lucide-react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
@@ -33,6 +33,7 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [activeCommentPost, setActiveCommentPost] = useState("");
   const [lightboxPost, setLightboxPost] = useState<WorkPost | null>(null);
+  const lightboxVideoRef = useRef<HTMLVideoElement | null>(null);
   const [postCounts, setPostCounts] = useState(
     () => Object.fromEntries(posts.map((post) => [post.id, { likes: post.likeCount, comments: post.commentCount, shares: post.shareCount }])) as Record<
       string,
@@ -125,6 +126,19 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
+  }, [lightboxPost]);
+
+  useEffect(() => {
+    if (!lightboxPost || lightboxPost.mediaType !== "video") return;
+
+    const video = lightboxVideoRef.current;
+    if (!video) return;
+
+    video.currentTime = 0;
+    void video.play().catch(() => {
+      video.muted = true;
+      void video.play().catch(() => undefined);
+    });
   }, [lightboxPost]);
   async function followWorker() {
     if (following) return;
@@ -384,7 +398,7 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
             </button>
             <div className="grid min-h-0 place-items-center bg-black p-2 sm:p-4">
               {lightboxPost.mediaType === "video" ? (
-                <video className="h-full max-h-full w-full max-w-full object-contain" src={lightboxPost.mediaUrl} controls autoPlay playsInline preload="metadata" />
+                <video ref={lightboxVideoRef} className="h-full max-h-full w-full max-w-full object-contain" src={lightboxPost.mediaUrl} controls autoPlay playsInline preload="auto" />
               ) : (
                 <img src={lightboxPost.mediaUrl} alt={`${worker.name} work update full view`} className="h-full max-h-full w-full max-w-full object-contain" decoding="async" />
               )}
@@ -421,6 +435,8 @@ function CommentBox({ onSubmit }: { onSubmit: (comment: string) => void }) {
     </form>
   );
 }
+
+
 
 
 

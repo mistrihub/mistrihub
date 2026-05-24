@@ -1,7 +1,7 @@
 ﻿/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Heart, MessageCircle, Send, Share2, X } from "lucide-react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
@@ -35,6 +35,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   const [commentOpen, setCommentOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const lightboxVideoRef = useRef<HTMLVideoElement | null>(null);
   const [comments, setComments] = useState<WorkPostComment[]>(post.comments ?? []);
   const [counts, setCounts] = useState({ likes: post.likeCount, comments: post.commentCount, shares: post.shareCount });
   const profileUrl = useMemo(() => (typeof window === "undefined" ? `/workers/${post.worker.id}` : `${window.location.origin}/workers/${post.worker.id}`), [post.worker.id]);
@@ -252,7 +253,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
             </button>
             <div className="grid min-h-0 place-items-center bg-black p-2 sm:p-4">
               {post.mediaType === "video" ? (
-                <video className="h-full max-h-full w-full max-w-full object-contain" src={post.mediaUrl} controls autoPlay playsInline preload="metadata" />
+                <video ref={lightboxVideoRef} className="h-full max-h-full w-full max-w-full object-contain" src={post.mediaUrl} controls autoPlay playsInline preload="auto" />
               ) : (
                 <img src={post.mediaUrl} alt={`${post.worker.name} work update full view`} className="h-full max-h-full w-full max-w-full object-contain" decoding="async" />
               )}
@@ -263,3 +264,5 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     </article>
   );
 }
+
+
