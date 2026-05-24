@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LayoutDashboard, MapPin, UserPlus } from "lucide-react";
+import { MapPin } from "lucide-react";
+import { HeaderAccount, HeaderDashboardButton } from "@/components/header-account";
 
 export function SiteHeader() {
   return (
@@ -29,25 +30,15 @@ export function SiteHeader() {
             <MapPin className="h-4 w-4" aria-hidden="true" />
             <span>India</span>
           </div>
-          <Link
-            href="/auth"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-auto sm:gap-2 sm:px-3"
-          >
-            <UserPlus className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Join</span>
-          </Link>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-ink transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-10"
-            aria-label="Worker dashboard"
-          >
-            <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          <HeaderAccount />
+          <HeaderDashboardButton />
         </div>
       </div>
     </header>
   );
 }
+
+
 
 
 

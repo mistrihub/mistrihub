@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Image from "next/image";
@@ -5,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { ImagePlus, LogOut, Save, UploadCloud, Video, X } from "lucide-react";
+import { LogOut, Save, Trash2, UploadCloud, Video, X } from "lucide-react";
 import { categories } from "@/lib/categories";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 
@@ -29,6 +30,20 @@ type DashboardWorker = {
   gallery: string[];
   available_today: boolean;
   starting_price: number;
+};
+
+type WorkPostRow = {
+  id: string;
+  media_url: string;
+  media_type: "image" | "video";
+  caption: string;
+  created_at: string;
+};
+
+type WorkDraft = {
+  file: File;
+  objectUrl: string;
+  mediaType: "image" | "video";
 };
 
 type CropDraft = {
@@ -137,8 +152,10 @@ export function DashboardClient() {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<DashboardWorker>(emptyProfile);
   const [servicesText, setServicesText] = useState("");
-  const [galleryText, setGalleryText] = useState("");
   const [workCaption, setWorkCaption] = useState("");
+  const [workDraft, setWorkDraft] = useState<WorkDraft | null>(null);
+  const [workPosts, setWorkPosts] = useState<WorkPostRow[]>([]);
+  const [workUploading, setWorkUploading] = useState(false);
   const [status, setStatus] = useState("Loading dashboard...");
   const [saving, setSaving] = useState(false);
   const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
@@ -185,7 +202,14 @@ export function DashboardClient() {
 
       setProfile(nextProfile);
       setServicesText(nextProfile.service_details.join("\n"));
-      setGalleryText(nextProfile.gallery.join("\n"));
+      if (data) {
+        const { data: postData } = await supabase
+          .from("work_posts")
+          .select("id, media_url, media_type, caption, created_at")
+          .eq("worker_id", nextProfile.id)
+          .order("created_at", { ascending: false });
+        setWorkPosts((postData as WorkPostRow[]) ?? []);
+      }
       setStatus(data ? "Profile loaded." : "Create your first worker profile.");
     }
 
@@ -273,25 +297,27 @@ export function DashboardClient() {
     }
   }
 
-  async function onGalleryChange(fileList: FileList | null) {
-    const files = Array.from(fileList ?? []);
-    if (files.length === 0) return;
-
-    setStatus("Adjusting and uploading gallery images...");
-    const processedFiles = await Promise.all(files.map((file) => prepareGalleryImageFile(file)));
-    const uploaded = await Promise.all(processedFiles.map((file) => uploadFile(file, "gallery")));
-    const publicUrls = uploaded.filter(Boolean);
-    const nextGallery = [...profile.gallery, ...publicUrls];
-
-    updateField("gallery", nextGallery);
-    setGalleryText(nextGallery.join("\n"));
-    setStatus("Gallery images uploaded.");
-  }
-
-
-  async function onWorkPostMediaChange(fileList: FileList | null) {
+  function onWorkPostMediaChange(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) return;
+
+    setWorkDraft((current) => {
+      if (current) URL.revokeObjectURL(current.objectUrl);
+      const mediaType = file.type.startsWith("video/") ? "video" : "image";
+      return {
+        file,
+        mediaType,
+        objectUrl: URL.createObjectURL(file)
+      };
+    });
+    setStatus("Preview your work update, then upload it.");
+  }
+
+  async function uploadWorkDraft() {
+    if (!workDraft) {
+      setStatus("Choose a work photo or video first.");
+      return;
+    }
 
     if (!profile.id) {
       setStatus("Save your profile before adding work updates.");
@@ -304,31 +330,57 @@ export function DashboardClient() {
     }
 
     try {
+      setWorkUploading(true);
       setStatus("Uploading work update...");
-      const mediaType = file.type.startsWith("video/") ? "video" : "image";
-      const uploadableFile = mediaType === "image" ? await prepareGalleryImageFile(file) : file;
+      const uploadableFile = workDraft.mediaType === "image" ? await prepareGalleryImageFile(workDraft.file) : workDraft.file;
       const publicUrl = await uploadFile(uploadableFile, "work");
 
       if (!publicUrl) return;
 
-      const { error } = await supabase.from("work_posts").insert({
-        worker_id: profile.id,
-        user_id: session.user.id,
-        media_url: publicUrl,
-        media_type: mediaType,
-        caption: workCaption || `${profile.category} work update`
-      });
+      const { data, error } = await supabase
+        .from("work_posts")
+        .insert({
+          worker_id: profile.id,
+          user_id: session.user.id,
+          media_url: publicUrl,
+          media_type: workDraft.mediaType,
+          caption: workCaption || `${profile.category} work update`
+        })
+        .select("id, media_url, media_type, caption, created_at")
+        .single();
 
       if (error) {
         setStatus(error.message);
         return;
       }
 
+      setWorkPosts((current) => [data as WorkPostRow, ...current]);
       setWorkCaption("");
-      setStatus("Work update uploaded. Open your public profile and refresh to see it.");
+      URL.revokeObjectURL(workDraft.objectUrl);
+      setWorkDraft(null);
+      setStatus("Work update uploaded. It is now visible on your public profile.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Work update upload failed. Please try again.");
+    } finally {
+      setWorkUploading(false);
     }
+  }
+
+  async function deleteWorkPost(postId: string) {
+    if (!supabase || !session) return;
+
+    const confirmDelete = window.confirm("Delete this work update from your public profile?");
+    if (!confirmDelete) return;
+
+    const { error } = await supabase.from("work_posts").delete().eq("id", postId).eq("user_id", session.user.id);
+
+    if (error) {
+      setStatus(error.message);
+      return;
+    }
+
+    setWorkPosts((current) => current.filter((post) => post.id !== postId));
+    setStatus("Work update deleted.");
   }
   async function saveProfile() {
     if (!supabase || !session) {
@@ -341,10 +393,7 @@ export function DashboardClient() {
       .split("\n")
       .map((item) => item.trim())
       .filter(Boolean);
-    const gallery = galleryText
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const gallery = profile.gallery;
 
     const payload = {
       id: profile.id,
@@ -489,18 +538,13 @@ export function DashboardClient() {
           <Field label="Service details, one per line">
             <textarea value={servicesText} onChange={(event) => setServicesText(event.target.value)} className="textarea" rows={4} />
           </Field>
-          <Field label="Gallery image URLs, one per line">
-            <textarea value={galleryText} onChange={(event) => setGalleryText(event.target.value)} className="textarea" rows={4} />
-          </Field>
-
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <UploadBox label="Upload profile photo" icon={<UploadCloud className="h-5 w-5" />} onChange={onProfilePhotoChange} />
-            <UploadBox label="Upload gallery images" icon={<ImagePlus className="h-5 w-5" />} multiple onChange={onGalleryChange} />
           </div>
 
           <div className="mt-5 rounded-xl bg-slate-50 p-4">
             <p className="text-sm font-black text-ink">Work photo / video update</p>
-            <p className="mt-1 text-sm text-slate-600">Profile par real work proof dikhane ke liye photo ya short video upload karo.</p>
+            <p className="mt-1 text-sm text-slate-600">Pehle preview dekho, phir upload karo. Ye public profile feed me dikhega.</p>
             <input
               value={workCaption}
               onChange={(event) => setWorkCaption(event.target.value)}
@@ -509,9 +553,69 @@ export function DashboardClient() {
             />
             <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white p-4 text-sm font-bold text-slate-700 shadow-sm transition hover:text-brand">
               <Video className="h-5 w-5" aria-hidden="true" />
-              Upload work photo or video
+              Choose work photo or video
               <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,video/mp4,video/webm" onChange={(event) => onWorkPostMediaChange(event.target.files)} className="sr-only" />
             </label>
+
+            {workDraft ? (
+              <div className="mt-4 rounded-xl bg-white p-3 shadow-sm">
+                <p className="mb-2 text-sm font-bold text-ink">Preview before upload</p>
+                {workDraft.mediaType === "video" ? (
+                  <video src={workDraft.objectUrl} controls playsInline className="aspect-video w-full rounded-lg bg-black object-cover" />
+                ) : (
+                  <img src={workDraft.objectUrl} alt="Work update preview" className="aspect-video w-full rounded-lg bg-slate-100 object-cover" />
+                )}
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => void uploadWorkDraft()}
+                    disabled={workUploading}
+                    className="inline-flex h-11 items-center justify-center rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-70"
+                  >
+                    {workUploading ? "Uploading..." : "Upload update"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      URL.revokeObjectURL(workDraft.objectUrl);
+                      setWorkDraft(null);
+                    }}
+                    className="inline-flex h-11 items-center justify-center rounded-lg bg-slate-100 px-4 text-sm font-bold text-ink"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {workPosts.length > 0 ? (
+              <div className="mt-5 space-y-3">
+                <p className="text-sm font-black text-ink">Uploaded work updates</p>
+                {workPosts.map((post) => (
+                  <div key={post.id} className="flex gap-3 rounded-lg bg-white p-3 shadow-sm">
+                    <div className="h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                      {post.media_type === "video" ? (
+                        <video src={post.media_url} className="h-full w-full object-cover" />
+                      ) : (
+                        <img src={post.media_url} alt={post.caption} className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-sm font-bold text-ink">{post.caption}</p>
+                      <p className="mt-1 text-xs text-slate-500">Visible on public profile</p>
+                      <button
+                        type="button"
+                        onClick={() => void deleteWorkPost(post.id)}
+                        className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-rose-600"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
           <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
             <button
@@ -683,6 +787,10 @@ function CropSlider({
     </label>
   );
 }
+
+
+
+
 
 
 
