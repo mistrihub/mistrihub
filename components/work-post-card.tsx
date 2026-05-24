@@ -2,8 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { Heart, MessageCircle, Send, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Send, Share2, X } from "lucide-react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 import type { WorkPostComment, WorkPostWithWorker } from "@/types/worker";
 
@@ -33,6 +32,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   const [visitorId, setVisitorId] = useState("");
   const [liked, setLiked] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
+  const [fullViewOpen, setFullViewOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<WorkPostComment[]>(post.comments ?? []);
   const [counts, setCounts] = useState({ likes: post.likeCount, comments: post.commentCount, shares: post.shareCount });
@@ -156,25 +156,21 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
 
   return (
     <article className="overflow-hidden rounded-xl bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
-      <Link href={`/workers/${post.worker.id}`} className="block focus-visible:outline-none focus-visible:ring-0">
+      <button type="button" onClick={() => setFullViewOpen(true)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-0" aria-label="Open media full view">
         <div className="aspect-[4/3] bg-slate-100">
           {post.mediaType === "video" ? (
-            <video className="h-full w-full object-cover" src={post.mediaUrl} controls muted playsInline preload="metadata" />
+            <video className="h-full w-full object-cover" src={post.mediaUrl} muted playsInline preload="metadata" />
           ) : (
             <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-full w-full object-cover" loading="lazy" />
           )}
         </div>
-      </Link>
+      </button>
 
       <div className="p-4">
         <div className="flex items-center gap-3">
-          <Link href={`/workers/${post.worker.id}`} className="shrink-0 focus-visible:outline-none focus-visible:ring-0">
-            <img src={post.worker.profilePhoto} alt={post.worker.name} className="h-10 w-10 rounded-full object-cover" loading="lazy" />
-          </Link>
+          <img src={post.worker.profilePhoto} alt={post.worker.name} className="h-10 w-10 shrink-0 rounded-full object-cover" loading="lazy" />
           <div className="min-w-0">
-            <Link href={`/workers/${post.worker.id}`} className="block truncate font-black text-ink hover:text-brand">
-              {post.worker.name}
-            </Link>
+            <p className="truncate font-black text-ink">{post.worker.name}</p>
             <p className="truncate text-xs font-semibold text-slate-500">
               {post.worker.category} in {post.worker.city}
             </p>
@@ -184,27 +180,15 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
         <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-700">{post.caption}</p>
 
         <div className="mt-4 grid grid-cols-3 gap-2 text-xs font-black text-slate-600">
-          <button
-            type="button"
-            onClick={() => void likePost()}
-            className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-50 px-2 py-2 text-rose-700 transition hover:bg-rose-100"
-          >
+          <button type="button" onClick={() => void likePost()} className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-50 px-2 py-2 text-rose-700 transition hover:bg-rose-100">
             <Heart className={`h-3.5 w-3.5 ${liked ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden="true" />
             {counts.likes}
           </button>
-          <button
-            type="button"
-            onClick={() => setCommentOpen((current) => !current)}
-            className="inline-flex items-center justify-center gap-1 rounded-lg bg-sky-50 px-2 py-2 text-sky-700 transition hover:bg-sky-100"
-          >
+          <button type="button" onClick={() => setCommentOpen((current) => !current)} className="inline-flex items-center justify-center gap-1 rounded-lg bg-sky-50 px-2 py-2 text-sky-700 transition hover:bg-sky-100">
             <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
             {counts.comments}
           </button>
-          <button
-            type="button"
-            onClick={() => void sharePost()}
-            className="inline-flex items-center justify-center gap-1 rounded-lg bg-teal-50 px-2 py-2 text-brand transition hover:bg-teal-100"
-          >
+          <button type="button" onClick={() => void sharePost()} className="inline-flex items-center justify-center gap-1 rounded-lg bg-teal-50 px-2 py-2 text-brand transition hover:bg-teal-100">
             <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
             {counts.shares}
           </button>
@@ -236,6 +220,26 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
           </div>
         ) : null}
       </div>
+
+      {fullViewOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-3 sm:p-6" role="dialog" aria-modal="true">
+          <div className="relative max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-xl bg-black shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setFullViewOpen(false)}
+              className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm transition hover:bg-white"
+              aria-label="Close full view"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+            {post.mediaType === "video" ? (
+              <video className="max-h-[92vh] w-full bg-black object-contain" src={post.mediaUrl} controls autoPlay playsInline />
+            ) : (
+              <img src={post.mediaUrl} alt={`${post.worker.name} work update full view`} className="max-h-[92vh] w-full object-contain" />
+            )}
+          </div>
+        </div>
+      ) : null}
     </article>
   );
 }

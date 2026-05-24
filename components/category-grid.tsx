@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Car, Drill, Fan, Hammer, Images, Navigation, Paintbrush, PlugZap, Wrench } from "lucide-react";
+import { Car, Drill, Fan, Hammer, Navigation, Paintbrush, PlugZap, Wrench } from "lucide-react";
 import { categories } from "@/lib/categories";
 import type { CategorySlug } from "@/types/worker";
 
@@ -12,7 +12,8 @@ const icons: Record<CategorySlug, typeof PlugZap> = {
   painter: Paintbrush,
   "ac-repair": Fan,
   "helper-labour": Wrench,
-  "mason-plaster": Hammer
+  "mason-plaster": Hammer,
+  "graphic-web-designer": Paintbrush
 };
 
 const specialCategories = [
@@ -21,12 +22,6 @@ const specialCategories = [
     name: "Nearby Workers",
     description: "Top rated workers near your current city",
     Icon: Navigation
-  },
-  {
-    href: "/work-updates",
-    name: "Work Photos/Videos",
-    description: "Top liked real worker posts and updates",
-    Icon: Images
   }
 ];
 

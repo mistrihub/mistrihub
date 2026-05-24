@@ -15,7 +15,7 @@ export async function TopWorkUpdates() {
         </p>
         <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Latest work photos & videos</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-          Real work uploaded by local workers. Like, comment, share, or open any card to see the worker profile.
+          Real work uploaded by local workers. Like, comment, share, or tap any photo/video for full view.
         </p>
       </div>
 
@@ -42,3 +42,4 @@ export async function TopWorkUpdates() {
     </section>
   );
 }
+
