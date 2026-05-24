@@ -27,7 +27,7 @@ type DashboardWorker = {
   short_description: string;
   bio: string;
   service_details: string[];
-  gallery: string[];
+  gallery?: string[];
   available_today: boolean;
   starting_price: number;
 };
@@ -74,7 +74,7 @@ const emptyProfile: DashboardWorker = {
   short_description: "",
   bio: "",
   service_details: [],
-  gallery: [],
+
   available_today: true,
   starting_price: 299
 };
@@ -192,7 +192,7 @@ export function DashboardClient() {
 
       const { data, error } = await supabase
         .from("workers")
-        .select("*")
+        .select("id,user_id,name,category,category_slug,experience_years,rating,review_count,location,city,phone,whatsapp,profile_photo,short_description,bio,service_details,available_today,starting_price")
         .eq("user_id", currentSession.user.id)
         .maybeSingle();
 
@@ -246,7 +246,7 @@ export function DashboardClient() {
     }));
   }
 
-  async function uploadFile(file: File, folder: "profile" | "gallery" | "work") {
+  async function uploadFile(file: File, folder: "profile" | "work") {
     if (!supabase || !session) {
       setStatus("Login before uploading images.");
       return "";
@@ -405,7 +405,7 @@ export function DashboardClient() {
       .split("\n")
       .map((item) => item.trim())
       .filter(Boolean);
-    const gallery = profile.gallery;
+
 
     const payload = {
       id: profile.id,
@@ -421,7 +421,6 @@ export function DashboardClient() {
       short_description: profile.short_description,
       bio: profile.bio,
       service_details: serviceDetails,
-      gallery,
       profile_photo:
         profile.profile_photo ||
         "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=600&q=80",
@@ -816,6 +815,8 @@ function CropSlider({
     </label>
   );
 }
+
+
 
 
 
