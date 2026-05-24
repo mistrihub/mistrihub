@@ -44,6 +44,9 @@ type WorkDraft = {
   file: File;
   objectUrl: string;
   mediaType: "image" | "video";
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
 };
 
 type CropDraft = {
@@ -89,33 +92,39 @@ function loadBrowserImage(src: string) {
   });
 }
 
-async function prepareGalleryImageFile(file: File) {
-  const imageUrl = URL.createObjectURL(file);
-  const image = await loadBrowserImage(imageUrl);
-  const maxSize = 1400;
+async function prepareWorkImageFile(workDraft: WorkDraft) {
+  const image = await loadBrowserImage(workDraft.objectUrl);
+  const outputWidth = 1400;
+  const outputHeight = 788;
+  const previewWidth = 560;
+  const previewHeight = 315;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
 
-  if (!context) {
-    URL.revokeObjectURL(imageUrl);
-    return file;
-  }
+  if (!context) return workDraft.file;
 
-  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
-  canvas.width = Math.round(image.width * scale);
-  canvas.height = Math.round(image.height * scale);
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const coverScale = Math.max(previewWidth / image.width, previewHeight / image.height) * workDraft.zoom;
+  const displayedWidth = image.width * coverScale;
+  const displayedHeight = image.height * coverScale;
+  const left = (previewWidth - displayedWidth) / 2 + workDraft.offsetX;
+  const top = (previewHeight - displayedHeight) / 2 + workDraft.offsetY;
+  const sourceX = Math.max(0, Math.min(image.width - previewWidth / coverScale, -left / coverScale));
+  const sourceY = Math.max(0, Math.min(image.height - previewHeight / coverScale, -top / coverScale));
+  const sourceWidth = Math.min(image.width - sourceX, previewWidth / coverScale);
+  const sourceHeight = Math.min(image.height - sourceY, previewHeight / coverScale);
+
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
+  context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, outputWidth, outputHeight);
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
-  URL.revokeObjectURL(imageUrl);
 
-  if (!blob) return file;
+  if (!blob) return workDraft.file;
 
-  return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+  return new File([blob], workDraft.file.name.replace(/\.[^.]+$/, ".jpg"), {
     type: "image/jpeg"
   });
 }
-
 async function prepareProfileImageFile(crop: CropDraft) {
   const image = await loadBrowserImage(crop.objectUrl);
   const outputSize = 900;
@@ -307,7 +316,10 @@ export function DashboardClient() {
       return {
         file,
         mediaType,
-        objectUrl: URL.createObjectURL(file)
+        objectUrl: URL.createObjectURL(file),
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0
       };
     });
     setStatus("Preview your work update, then upload it.");
@@ -332,7 +344,7 @@ export function DashboardClient() {
     try {
       setWorkUploading(true);
       setStatus("Uploading work update...");
-      const uploadableFile = workDraft.mediaType === "image" ? await prepareGalleryImageFile(workDraft.file) : workDraft.file;
+      const uploadableFile = workDraft.mediaType === "image" ? await prepareWorkImageFile(workDraft) : workDraft.file;
       const publicUrl = await uploadFile(uploadableFile, "work");
 
       if (!publicUrl) return;
@@ -563,8 +575,25 @@ export function DashboardClient() {
                 {workDraft.mediaType === "video" ? (
                   <video src={workDraft.objectUrl} controls playsInline className="aspect-video w-full rounded-lg bg-black object-cover" />
                 ) : (
-                  <img src={workDraft.objectUrl} alt="Work update preview" className="aspect-video w-full rounded-lg bg-slate-100 object-cover" />
+                  <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-100">
+                    <img
+                      src={workDraft.objectUrl}
+                      alt="Work update preview"
+                      className="h-full w-full object-cover"
+                      style={{
+                        transform: `translate(${workDraft.offsetX}px, ${workDraft.offsetY}px) scale(${workDraft.zoom})`,
+                        transformOrigin: "center"
+                      }}
+                    />
+                  </div>
                 )}
+                {workDraft.mediaType === "image" ? (
+                  <div className="mt-4 space-y-3">
+                    <CropSlider label="Zoom" min={1} max={3} step={0.05} value={workDraft.zoom} onChange={(value) => setWorkDraft({ ...workDraft, zoom: value })} />
+                    <CropSlider label="Left / Right" min={-160} max={160} step={1} value={workDraft.offsetX} onChange={(value) => setWorkDraft({ ...workDraft, offsetX: value })} />
+                    <CropSlider label="Up / Down" min={-120} max={120} step={1} value={workDraft.offsetY} onChange={(value) => setWorkDraft({ ...workDraft, offsetY: value })} />
+                  </div>
+                ) : null}
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
@@ -787,6 +816,13 @@ function CropSlider({
     </label>
   );
 }
+
+
+
+
+
+
+
 
 
 
