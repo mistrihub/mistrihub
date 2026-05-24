@@ -53,3 +53,14 @@ export type Review = {
   reviewText: string;
   createdAt: string;
 };
+
+export type WorkPost = {
+  id: string;
+  workerId: string;
+  mediaUrl: string;
+  mediaType: "image" | "video";
+  caption: string;
+  likeCount: number;
+  commentCount: number;
+  createdAt: string;
+};
