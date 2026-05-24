@@ -3,7 +3,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CalendarCheck, MessageCircle, Phone, Star } from "lucide-react";
 import { ReviewSection } from "@/components/review-section";
-import { getReviews, getWorkerById } from "@/lib/workers";
+import { WorkerWorkFeed } from "@/components/worker-work-feed";
+import { getReviews, getWorkerById, getWorkPosts } from "@/lib/workers";
 import { createWhatsAppUrl, formatPrice } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export default async function WorkerProfilePage({ params }: ProfileProps) {
   const { id } = await params;
   const worker = await getWorkerById(id);
   const reviews = await getReviews(id);
+  const workPosts = worker ? await getWorkPosts(worker) : [];
 
   if (!worker) {
     notFound();
@@ -114,8 +116,12 @@ export default async function WorkerProfilePage({ params }: ProfileProps) {
           </div>
         </div>
       </div>
+      <WorkerWorkFeed worker={worker} posts={workPosts} />
       <ReviewSection workerId={worker.id} reviews={reviews} />
     </section>
   );
 }
+
+
+
 
