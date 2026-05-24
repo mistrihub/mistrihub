@@ -23,7 +23,7 @@ export default function ServicesPage() {
             <h2 className="text-xl font-black text-ink">{category.name}</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">{category.description}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {seoCities.slice(0, 8).map((city) => (
+              {seoCities.map((city) => (
                 <Link
                   key={city}
                   href={`/services/${category.slug}/${cityToSlug(city)}`}
@@ -40,3 +40,4 @@ export default function ServicesPage() {
     </section>
   );
 }
+
