@@ -34,6 +34,7 @@ type WorkPostRow = {
   caption: string | null;
   like_count: number;
   comment_count: number;
+  share_count?: number;
   created_at: string;
 };type ReviewRow = {
   id: string;
@@ -78,6 +79,7 @@ function mapWorkPost(row: WorkPostRow): WorkPost {
     caption: row.caption || "Recent work update",
     likeCount: row.like_count,
     commentCount: row.comment_count,
+    shareCount: row.share_count ?? 0,
     createdAt: row.created_at
   };
 }function mapReview(row: ReviewRow): Review {
@@ -220,6 +222,8 @@ export async function getWorkPosts(worker: Worker): Promise<WorkPost[]> {
     caption: `${worker.category} work sample ${index + 1}`,
     likeCount: Math.max(3, Math.round(worker.rating * 3) + index),
     commentCount: index,
+    shareCount: index + 1,
+    comments: [],
     createdAt: new Date().toISOString()
   }));
 
@@ -240,3 +244,5 @@ export async function getWorkPosts(worker: Worker): Promise<WorkPost[]> {
   const posts = (data as WorkPostRow[]).map(mapWorkPost);
   return posts.length > 0 ? posts : galleryPosts;
 }
+
+
