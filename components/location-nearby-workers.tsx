@@ -109,7 +109,7 @@ export function LocationNearbyWorkers() {
       watchIdRef.current = null;
     }
     setTracking(false);
-    setStatus(city ? `Showing top workers near ${city}.` : "GPS tracking stopped.");
+    setStatus(city ? `Showing top workers near ${city}.` : "Location tracking stopped.");
   }, [city]);
 
   const startGpsTracking = useCallback(() => {
@@ -142,7 +142,7 @@ export function LocationNearbyWorkers() {
       updateFromPosition,
       () => {
         setTracking(false);
-        setStatus("GPS tracking stopped. Allow location again to refresh nearby workers.");
+        setStatus("Location tracking stopped. Allow location again to refresh nearby workers.");
       },
       {
         enableHighAccuracy: true,
@@ -169,14 +169,14 @@ export function LocationNearbyWorkers() {
           <div>
             <p className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-brand">
               <LocateFixed className="h-4 w-4" aria-hidden="true" />
-              GPS nearby workers
+              Top rated near you
             </p>
             <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Top 10 workers in {detectedLabel}</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">All categories mixed together, sorted by highest rating first.</p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
               <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 ${tracking ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                 <Radio className="h-3.5 w-3.5" aria-hidden="true" />
-                {tracking ? "Live GPS on" : "GPS off"}
+                {tracking ? "Location active" : "Location off"}
               </span>
               {accuracy ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">Accuracy {accuracy}m</span> : null}
               {cityDistance !== null ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">Nearest city approx {cityDistance}km</span> : null}
@@ -193,7 +193,7 @@ export function LocationNearbyWorkers() {
               className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800"
             >
               <Navigation className="h-4 w-4" aria-hidden="true" />
-              Use live GPS
+              Use my location
             </button>
             {tracking ? (
               <button
@@ -202,7 +202,7 @@ export function LocationNearbyWorkers() {
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-slate-100 px-5 text-sm font-bold text-ink transition hover:bg-slate-200"
               >
                 <Square className="h-4 w-4" aria-hidden="true" />
-                Stop GPS
+                Stop location
               </button>
             ) : null}
             <Link
@@ -240,6 +240,7 @@ export function LocationNearbyWorkers() {
     </section>
   );
 }
+
 
 
 
