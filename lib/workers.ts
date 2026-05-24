@@ -19,7 +19,7 @@ type WorkerRow = {
   short_description: string;
   bio: string;
   service_details: string[];
-  gallery: string[];
+  gallery?: string[];
   available_today: boolean;
   starting_price: number;
   created_at?: string;
@@ -63,7 +63,7 @@ function mapWorker(row: WorkerRow): Worker {
     shortDescription: row.short_description,
     bio: row.bio,
     serviceDetails: row.service_details,
-    gallery: row.gallery,
+    gallery: row.gallery ?? [],
     availableToday: row.available_today,
     startingPrice: row.starting_price
   };
@@ -128,7 +128,7 @@ export async function getWorkers(filters: WorkerFilters = {}): Promise<Worker[]>
     return filterDemoWorkers(filters);
   }
 
-  let query = supabase.from("workers").select("*");
+  let query = supabase.from("workers").select("id,user_id,name,category,category_slug,experience_years,rating,review_count,location,city,phone,whatsapp,profile_photo,short_description,bio,service_details,available_today,starting_price,created_at");
 
   if (filters.category) {
     query = query.eq("category_slug", filters.category);
@@ -164,7 +164,7 @@ export async function getWorkerById(id: string): Promise<Worker | null> {
     return demoWorkers.find((worker) => worker.id === id) ?? null;
   }
 
-  const { data, error } = await supabase.from("workers").select("*").eq("id", id).single();
+  const { data, error } = await supabase.from("workers").select("id,user_id,name,category,category_slug,experience_years,rating,review_count,location,city,phone,whatsapp,profile_photo,short_description,bio,service_details,available_today,starting_price,created_at").eq("id", id).single();
 
   if (error || !data) {
     return demoWorkers.find((worker) => worker.id === id) ?? null;
@@ -214,7 +214,7 @@ export async function getReviews(workerId: string): Promise<Review[]> {
 }
 
 export async function getWorkPosts(worker: Worker): Promise<WorkPost[]> {
-  const galleryPosts = worker.gallery.map((image, index) => ({
+  const galleryPosts = (worker.gallery ?? []).map((image, index) => ({
     id: `${worker.id}-gallery-${index}`,
     workerId: worker.id,
     mediaUrl: image,
@@ -244,5 +244,6 @@ export async function getWorkPosts(worker: Worker): Promise<WorkPost[]> {
   const posts = (data as WorkPostRow[]).map(mapWorkPost);
   return posts.length > 0 ? posts : galleryPosts;
 }
+
 
 
