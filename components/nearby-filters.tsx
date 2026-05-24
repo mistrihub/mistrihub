@@ -23,7 +23,7 @@ export function NearbyFilters({ cities }: { cities: string[] }) {
   }
 
   return (
-    <form action={onSubmit} className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
+    <form action={onSubmit} className="rounded-xl bg-white p-3 shadow-soft sm:p-4">
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_150px_auto_auto]">
       <label className="sr-only" htmlFor="nearby-city">
         City
@@ -32,7 +32,7 @@ export function NearbyFilters({ cities }: { cities: string[] }) {
         id="nearby-city"
         name="city"
         defaultValue={searchParams.get("city") ?? ""}
-        className="h-12 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand"
+        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="">All cities</option>
         {cities.map((city) => (
@@ -49,7 +49,7 @@ export function NearbyFilters({ cities }: { cities: string[] }) {
         id="nearby-category"
         name="category"
         defaultValue={searchParams.get("category") ?? ""}
-        className="h-12 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand"
+        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="">All categories</option>
         {categories.map((category) => (
@@ -66,7 +66,7 @@ export function NearbyFilters({ cities }: { cities: string[] }) {
         id="nearby-rating"
         name="rating"
         defaultValue={searchParams.get("rating") ?? ""}
-        className="h-12 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand"
+        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="">Any rating</option>
         <option value="4">4.0+</option>
@@ -74,24 +74,25 @@ export function NearbyFilters({ cities }: { cities: string[] }) {
         <option value="4.8">4.8+</option>
       </select>
 
-        <button className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800">
+        <button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800 sm:h-12">
           <Search className="h-4 w-4" aria-hidden="true" />
           Find
         </button>
 
         <Link
           href="/nearby"
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-bold text-ink transition hover:border-brand"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 text-sm font-bold text-ink transition hover:bg-slate-200 sm:h-12"
         >
           <X className="h-4 w-4" aria-hidden="true" />
           Clear
         </Link>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-500">
+      <div className="mt-3 hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex">
         <Filter className="h-4 w-4" aria-hidden="true" />
         No GPS tracking. Choose a city or area and LocalPro ranks workers by rating.
       </div>
     </form>
   );
 }
+

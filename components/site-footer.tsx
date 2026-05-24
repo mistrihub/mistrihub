@@ -8,7 +8,7 @@ export function SiteFooter() {
           <p className="font-semibold text-ink">MistriHub</p>
           <p>Simple worker discovery for Indian local services.</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
           <Link href="/services">Services</Link>
           <Link href="/categories">Categories</Link>
           <Link href="/#workers">Featured</Link>
@@ -21,5 +21,6 @@ export function SiteFooter() {
     </footer>
   );
 }
+
 
 
