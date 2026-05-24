@@ -10,6 +10,7 @@
 
 * {
   box-sizing: border-box;
+  min-width: 0;
 }
 
 html {
@@ -65,4 +66,59 @@ select {
   padding: 0.75rem;
   color: #334155;
   outline: none;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a,
+span,
+button {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  body {
+    min-width: 0;
+  }
+
+  section,
+  header,
+  footer,
+  main,
+  form,
+  article,
+  aside,
+  div {
+    max-width: 100%;
+  }
+
+  .input,
+  .textarea {
+    font-size: 16px;
+  }
 }

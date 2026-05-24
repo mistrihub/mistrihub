@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mistrihub.in";
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover"
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -66,4 +72,6 @@ export default function RootLayout({
     </html>
   );
 }
+
+
 
