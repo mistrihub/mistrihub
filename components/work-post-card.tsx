@@ -33,12 +33,30 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   const [visitorId, setVisitorId] = useState("");
   const [liked, setLiked] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
-  const [fullViewOpen, setFullViewOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<WorkPostComment[]>(post.comments ?? []);
   const [counts, setCounts] = useState({ likes: post.likeCount, comments: post.commentCount, shares: post.shareCount });
   const profileUrl = useMemo(() => (typeof window === "undefined" ? `/workers/${post.worker.id}` : `${window.location.origin}/workers/${post.worker.id}`), [post.worker.id]);
   const isDemoPost = post.id.includes("gallery");
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setLightboxOpen(false);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [lightboxOpen]);
 
   useEffect(() => {
     const nextVisitorId = getVisitorId();
@@ -145,13 +163,13 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   }
 
   return (
-    <article className="overflow-hidden rounded-xl bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
-      <button type="button" onClick={() => setFullViewOpen(true)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-0" aria-label="Open media full view">
+    <article className="overflow-hidden rounded-xl bg-white shadow-sm transition hover:shadow-soft">
+      <button type="button" onClick={() => setLightboxOpen(true)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-0" aria-label="Open media full view">
         <div className="aspect-[4/3] bg-slate-100">
           {post.mediaType === "video" ? (
             <video className="h-full w-full object-cover" src={post.mediaUrl} muted playsInline preload="metadata" />
           ) : (
-            <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-full w-full object-cover" loading="lazy" />
+            <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           )}
         </div>
       </button>
@@ -159,7 +177,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
       <div className="p-4">
         <div className="flex items-center gap-3">
           <Link href={`/workers/${post.worker.id}`} className="shrink-0 focus-visible:outline-none focus-visible:ring-0" aria-label={`${post.worker.name} profile`}>
-            <img src={post.worker.profilePhoto} alt={post.worker.name} className="h-10 w-10 rounded-full object-cover" loading="lazy" />
+            <img src={post.worker.profilePhoto} alt={post.worker.name} className="h-10 w-10 rounded-full object-cover" loading="lazy" decoding="async" />
           </Link>
           <div className="min-w-0">
             <Link href={`/workers/${post.worker.id}`} className="block truncate font-black text-ink hover:text-brand focus-visible:outline-none focus-visible:ring-0">
@@ -215,28 +233,28 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
         ) : null}
       </div>
 
-      {fullViewOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-3 sm:p-6" role="dialog" aria-modal="true">
-          <div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between gap-3 bg-white p-3 pr-14">
+      {lightboxOpen ? (
+        <div className="fixed inset-0 z-50 grid h-screen w-screen place-items-center bg-black/90 p-3 sm:p-6" role="dialog" aria-modal="true">
+          <div className="relative grid h-full w-full max-w-6xl grid-rows-[auto_1fr] overflow-hidden rounded-xl bg-neutral-950 shadow-2xl">
+            <div className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 bg-neutral-950 px-4 py-3 pr-16 text-white">
               <div className="min-w-0">
-                <p className="truncate font-black text-ink">{post.worker.name}</p>
-                <p className="truncate text-xs font-semibold text-slate-500">{post.caption}</p>
+                <p className="truncate text-sm font-black sm:text-base">{post.worker.name}</p>
+                <p className="truncate text-xs text-white/70">{post.caption}</p>
               </div>
             </div>
             <button
               type="button"
-              onClick={() => setFullViewOpen(false)}
-              className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-ink shadow-sm transition hover:bg-slate-200"
+              onClick={() => setLightboxOpen(false)}
+              className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-lg transition hover:bg-slate-100"
               aria-label="Close full view"
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
-            <div className="bg-black">
+            <div className="grid min-h-0 place-items-center bg-black p-2 sm:p-4">
               {post.mediaType === "video" ? (
-                <video className="max-h-[78vh] w-full bg-black object-contain" src={post.mediaUrl} controls autoPlay playsInline />
+                <video className="h-full max-h-full w-full max-w-full object-contain" src={post.mediaUrl} controls autoPlay playsInline preload="metadata" />
               ) : (
-                <img src={post.mediaUrl} alt={`${post.worker.name} work update full view`} className="max-h-[78vh] w-full bg-black object-contain" />
+                <img src={post.mediaUrl} alt={`${post.worker.name} work update full view`} className="h-full max-h-full w-full max-w-full object-contain" decoding="async" />
               )}
             </div>
           </div>
