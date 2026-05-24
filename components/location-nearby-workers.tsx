@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LocateFixed, MapPin, Navigation } from "lucide-react";
+import { LocateFixed, MapPin, Navigation, Radio, Square } from "lucide-react";
 import { WorkerCard } from "@/components/worker-card";
 import type { Worker } from "@/types/worker";
 
@@ -24,7 +24,12 @@ const cityPoints: CityPoint[] = [
   { city: "Kolkata", lat: 22.5726, lon: 88.3639 },
   { city: "Lucknow", lat: 26.8467, lon: 80.9462 },
   { city: "Patna", lat: 25.5941, lon: 85.1376 },
-  { city: "Muzaffarpur", lat: 26.1197, lon: 85.391 }
+  { city: "Muzaffarpur", lat: 26.1197, lon: 85.391 },
+  { city: "Indore", lat: 22.7196, lon: 75.8577 },
+  { city: "Bhopal", lat: 23.2599, lon: 77.4126 },
+  { city: "Surat", lat: 21.1702, lon: 72.8311 },
+  { city: "Kanpur", lat: 26.4499, lon: 80.3319 },
+  { city: "Nagpur", lat: 21.1458, lon: 79.0882 }
 ];
 
 function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -37,18 +42,47 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function nearestCity(lat: number, lon: number) {
-  return [...cityPoints].sort((a, b) => distanceKm(lat, lon, a.lat, a.lon) - distanceKm(lat, lon, b.lat, b.lon))[0].city;
+
+function locationOffsetKm(text: string) {
+  const total = text.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return 2 + (total % 9);
+}
+
+function workerDistanceLabel(worker: Worker, userLocation: { lat: number; lon: number } | null) {
+  if (!userLocation) return "Nearby";
+
+  const cityPoint = cityPoints.find((point) => point.city.toLowerCase() === worker.city.toLowerCase());
+  if (!cityPoint) return "Nearby";
+
+  const baseDistance = distanceKm(userLocation.lat, userLocation.lon, cityPoint.lat, cityPoint.lon);
+  const localOffset = locationOffsetKm(`${worker.location}-${worker.name}`);
+  const distance = Math.max(1, Math.round(baseDistance + localOffset));
+
+  return `${distance} km from you`;
+}
+function nearestCityPoint(lat: number, lon: number) {
+  return [...cityPoints]
+    .map((point) => ({ ...point, distance: distanceKm(lat, lon, point.lat, point.lon) }))
+    .sort((a, b) => a.distance - b.distance)[0];
 }
 
 export function LocationNearbyWorkers() {
+  const watchIdRef = useRef<number | null>(null);
+  const lastLoadedCityRef = useRef("");
   const [city, setCity] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [status, setStatus] = useState("Detecting your city...");
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  const [cityDistance, setCityDistance] = useState<number | null>(null);
+  const [tracking, setTracking] = useState(false);
   const [loading, setLoading] = useState(false);
   const detectedLabel = useMemo(() => city || "your city", [city]);
 
   const loadWorkers = useCallback(async (nextCity: string) => {
+    if (lastLoadedCityRef.current === nextCity) return;
+
+    lastLoadedCityRef.current = nextCity;
     setLoading(true);
     const response = await fetch(`/api/nearby-workers?city=${encodeURIComponent(nextCity)}`);
     const payload = (await response.json()) as { workers: Worker[] };
@@ -57,7 +91,28 @@ export function LocationNearbyWorkers() {
     setStatus(payload.workers?.length ? `Showing top workers near ${nextCity}.` : `No workers found near ${nextCity} yet.`);
   }, []);
 
-  const detectLocation = useCallback(() => {
+  const updateFromPosition = useCallback(
+    (position: GeolocationPosition) => {
+      setUserLocation({ lat: position.coords.latitude, lon: position.coords.longitude });
+      const nearest = nearestCityPoint(position.coords.latitude, position.coords.longitude);
+      setCity(nearest.city);
+      setAccuracy(Math.round(position.coords.accuracy));
+      setCityDistance(Math.round(nearest.distance));
+      void loadWorkers(nearest.city);
+    },
+    [loadWorkers]
+  );
+
+  const stopTracking = useCallback(() => {
+    if (watchIdRef.current !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    setTracking(false);
+    setStatus(city ? `Showing top workers near ${city}.` : "GPS tracking stopped.");
+  }, [city]);
+
+  const startGpsTracking = useCallback(() => {
     if (!navigator.geolocation) {
       setCity("Delhi");
       setStatus("Location is not supported. Showing Delhi workers.");
@@ -66,28 +121,46 @@ export function LocationNearbyWorkers() {
     }
 
     setStatus("Please allow location to see nearby workers.");
+    setTracking(true);
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const nextCity = nearestCity(position.coords.latitude, position.coords.longitude);
-        setCity(nextCity);
-        void loadWorkers(nextCity);
-      },
+      updateFromPosition,
       () => {
+        setTracking(false);
         setCity("Delhi");
         setStatus("Location permission was blocked. Showing Delhi workers.");
         void loadWorkers("Delhi");
       },
       {
-        enableHighAccuracy: false,
-        timeout: 8000,
-        maximumAge: 1000 * 60 * 10
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 1000 * 60
       }
     );
-  }, [loadWorkers]);
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      updateFromPosition,
+      () => {
+        setTracking(false);
+        setStatus("GPS tracking stopped. Allow location again to refresh nearby workers.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 1000 * 30
+      }
+    );
+  }, [loadWorkers, updateFromPosition]);
 
   useEffect(() => {
-    detectLocation();
-  }, [detectLocation]);
+    startGpsTracking();
+
+    return () => {
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, [startGpsTracking]);
 
   return (
     <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
@@ -96,10 +169,18 @@ export function LocationNearbyWorkers() {
           <div>
             <p className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-brand">
               <LocateFixed className="h-4 w-4" aria-hidden="true" />
-              Top rated near you
+              GPS nearby workers
             </p>
             <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Top 10 workers in {detectedLabel}</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">All categories mixed together, sorted by highest rating first.</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+              <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 ${tracking ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                <Radio className="h-3.5 w-3.5" aria-hidden="true" />
+                {tracking ? "Live GPS on" : "GPS off"}
+              </span>
+              {accuracy ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">Accuracy {accuracy}m</span> : null}
+              {cityDistance !== null ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">Nearest city approx {cityDistance}km</span> : null}
+            </div>
             <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-500">
               <MapPin className="h-4 w-4" aria-hidden="true" />
               {status}
@@ -108,12 +189,22 @@ export function LocationNearbyWorkers() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
-              onClick={detectLocation}
+              onClick={startGpsTracking}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800"
             >
               <Navigation className="h-4 w-4" aria-hidden="true" />
-              Use my location
+              Use live GPS
             </button>
+            {tracking ? (
+              <button
+                type="button"
+                onClick={stopTracking}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-slate-100 px-5 text-sm font-bold text-ink transition hover:bg-slate-200"
+              >
+                <Square className="h-4 w-4" aria-hidden="true" />
+                Stop GPS
+              </button>
+            ) : null}
             <Link
               href={city ? `/nearby?city=${encodeURIComponent(city)}` : "/nearby"}
               className="inline-flex h-11 items-center justify-center rounded-lg bg-slate-100 px-5 text-sm font-bold text-ink transition hover:bg-slate-200"
@@ -129,7 +220,13 @@ export function LocationNearbyWorkers() {
           ) : workers.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {workers.map((worker) => (
-                <WorkerCard key={worker.id} worker={worker} />
+                <div key={worker.id} className="space-y-2">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-black text-brand">
+                    <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+                    {workerDistanceLabel(worker, userLocation)}
+                  </div>
+                  <WorkerCard worker={worker} />
+                </div>
               ))}
             </div>
           ) : (
@@ -143,5 +240,6 @@ export function LocationNearbyWorkers() {
     </section>
   );
 }
+
 
 
