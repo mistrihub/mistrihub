@@ -325,7 +325,7 @@ export function DashboardClient() {
       }
 
       setWorkCaption("");
-      setStatus("Work update uploaded. Open your public profile to see it.");
+      setStatus("Work update uploaded. Open your public profile and refresh to see it.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Work update upload failed. Please try again.");
     }
@@ -510,7 +510,7 @@ export function DashboardClient() {
             <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white p-4 text-sm font-bold text-slate-700 shadow-sm transition hover:text-brand">
               <Video className="h-5 w-5" aria-hidden="true" />
               Upload work photo or video
-              <input type="file" accept="image/*,video/*" onChange={(event) => onWorkPostMediaChange(event.target.files)} className="sr-only" />
+              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,video/mp4,video/webm" onChange={(event) => onWorkPostMediaChange(event.target.files)} className="sr-only" />
             </label>
           </div>
           <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
@@ -683,6 +683,7 @@ function CropSlider({
     </label>
   );
 }
+
 
 
 
