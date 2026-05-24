@@ -1,9 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { BadgeCheck, Heart, MessageCircle, Send, Share2, TrendingUp, UserPlus } from "lucide-react";
+import { BadgeCheck, Heart, MessageCircle, Send, Share2, TrendingUp, UserPlus, X } from "lucide-react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 import { createWhatsAppUrl } from "@/lib/utils";
 import type { WorkPost, WorkPostComment, Worker } from "@/types/worker";
@@ -32,6 +32,7 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
   const [followerCount, setFollowerCount] = useState(Math.max(8, worker.reviewCount * 4 + posts.length));
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [activeCommentPost, setActiveCommentPost] = useState("");
+  const [lightboxPost, setLightboxPost] = useState<WorkPost | null>(null);
   const [postCounts, setPostCounts] = useState(
     () => Object.fromEntries(posts.map((post) => [post.id, { likes: post.likeCount, comments: post.commentCount, shares: post.shareCount }])) as Record<
       string,
@@ -107,6 +108,24 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
     void loadEngagement();
   }, [posts, worker.id]);
 
+
+  useEffect(() => {
+    if (!lightboxPost) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setLightboxPost(null);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [lightboxPost]);
   async function followWorker() {
     if (following) return;
 
@@ -272,15 +291,20 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
                   <span className="rounded-full bg-teal-50 px-2 py-1 text-xs font-black text-brand">Work proof</span>
                 </div>
 
-                <div className="relative bg-slate-100">
-                  {post.mediaType === "video" ? (
-                    <video src={post.mediaUrl} controls playsInline className="aspect-video w-full bg-black object-cover" />
-                  ) : (
-                    <div className="relative aspect-video w-full">
-                      <Image src={post.mediaUrl} alt={post.caption} fill className="object-cover" sizes="(min-width: 1024px) 50vw, 100vw" />
-                    </div>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setLightboxPost(post)}
+                  className="block w-full bg-slate-100 text-left focus-visible:outline-none focus-visible:ring-0"
+                  aria-label="Open work media full view"
+                >
+                  <div className="aspect-video w-full bg-slate-100">
+                    {post.mediaType === "video" ? (
+                      <video src={post.mediaUrl} muted playsInline preload="metadata" className="h-full w-full bg-black object-cover" />
+                    ) : (
+                      <img src={post.mediaUrl} alt={post.caption} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                    )}
+                  </div>
+                </button>
 
                 <div className="p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -341,6 +365,33 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
           })}
         </div>
       )}
+      {lightboxPost ? (
+        <div className="fixed inset-0 z-50 grid h-screen w-screen place-items-center bg-black/90 p-3 sm:p-6" role="dialog" aria-modal="true">
+          <div className="relative grid h-full w-full max-w-6xl grid-rows-[auto_1fr] overflow-hidden rounded-xl bg-neutral-950 shadow-2xl">
+            <div className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 bg-neutral-950 px-4 py-3 pr-16 text-white">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black sm:text-base">{worker.name}</p>
+                <p className="truncate text-xs text-white/70">{lightboxPost.caption}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setLightboxPost(null)}
+              className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-lg transition hover:bg-slate-100"
+              aria-label="Close full view"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <div className="grid min-h-0 place-items-center bg-black p-2 sm:p-4">
+              {lightboxPost.mediaType === "video" ? (
+                <video className="h-full max-h-full w-full max-w-full object-contain" src={lightboxPost.mediaUrl} controls autoPlay playsInline preload="metadata" />
+              ) : (
+                <img src={lightboxPost.mediaUrl} alt={`${worker.name} work update full view`} className="h-full max-h-full w-full max-w-full object-contain" decoding="async" />
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -370,6 +421,10 @@ function CommentBox({ onSubmit }: { onSubmit: (comment: string) => void }) {
     </form>
   );
 }
+
+
+
+
 
 
 
