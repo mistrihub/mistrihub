@@ -16,7 +16,7 @@ export async function TopWorkUpdates() {
           </p>
           <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Latest work photos & videos</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Real work uploaded by local workers. Open any card to see the worker profile and full social updates.
+            Real work uploaded by local workers. Like, comment, share, or open any card to see the worker profile.
           </p>
         </div>
         <Link href="/work-updates" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-brand shadow-sm transition hover:text-teal-800 focus-visible:outline-none focus-visible:ring-0">
@@ -28,7 +28,7 @@ export async function TopWorkUpdates() {
       {posts.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {posts.map((post) => (
-            <WorkPostCard key={post.id} post={post} showEngagement={false} />
+            <WorkPostCard key={post.id} post={post} />
           ))}
         </div>
       ) : (
@@ -40,3 +40,4 @@ export async function TopWorkUpdates() {
     </section>
   );
 }
+
