@@ -62,5 +62,16 @@ export type WorkPost = {
   caption: string;
   likeCount: number;
   commentCount: number;
+  shareCount: number;
+  comments?: WorkPostComment[];
   createdAt: string;
 };
+
+export type WorkPostComment = {
+  id: string;
+  postId: string;
+  visitorName: string;
+  commentText: string;
+  createdAt: string;
+};
+
