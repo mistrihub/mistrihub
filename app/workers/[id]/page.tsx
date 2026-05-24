@@ -46,13 +46,7 @@ export default async function WorkerProfilePage({ params }: ProfileProps) {
           <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-white shadow-soft">
             <Image src={worker.profilePhoto} alt={worker.name} fill className="object-cover" priority sizes="(min-width: 1024px) 45vw, 100vw" />
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            {worker.gallery.map((image, index) => (
-              <div key={image} className="relative aspect-square overflow-hidden rounded-lg bg-white shadow-sm">
-                <Image src={image} alt={`${worker.name} work sample ${index + 1}`} fill className="object-cover" sizes="180px" />
-              </div>
-            ))}
-          </div>
+
         </div>
 
         <div>
@@ -121,6 +115,7 @@ export default async function WorkerProfilePage({ params }: ProfileProps) {
     </section>
   );
 }
+
 
 
 
