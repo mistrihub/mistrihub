@@ -26,7 +26,7 @@ export function SearchForm() {
   return (
     <form
       action={onSubmit}
-      className="grid gap-2 rounded-xl bg-white p-3 shadow-soft sm:gap-3 md:grid-cols-[1fr_1fr_140px_170px_auto]"
+      className="grid gap-2 rounded-xl bg-white p-3 shadow-soft sm:gap-3 md:grid-cols-[1.15fr_1fr_140px_170px_auto]"
     >
       <label className="sr-only" htmlFor="category">
         Category
@@ -35,7 +35,7 @@ export function SearchForm() {
         id="category"
         name="category"
         defaultValue={searchParams.get("category") ?? ""}
-        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
+        className="h-11 w-full rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="">All categories</option>
         {categories.map((category) => (
@@ -52,7 +52,7 @@ export function SearchForm() {
         name="location"
         defaultValue={searchParams.get("location") ?? ""}
         placeholder="Enter city or area"
-        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
+        className="h-11 w-full rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       />
       <label className="sr-only" htmlFor="rating">
         Rating
@@ -61,7 +61,7 @@ export function SearchForm() {
         id="rating"
         name="rating"
         defaultValue={searchParams.get("rating") ?? ""}
-        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
+        className="h-11 w-full rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="">Any rating</option>
         <option value="4">4.0+</option>
@@ -75,7 +75,7 @@ export function SearchForm() {
         id="sort"
         name="sort"
         defaultValue={searchParams.get("sort") ?? "rating"}
-        className="h-11 rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
+        className="h-11 w-full rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-teal-100 sm:h-12"
       >
         <option value="rating">Top rated</option>
         <option value="experience">Most experienced</option>
@@ -92,4 +92,5 @@ export function SearchForm() {
     </form>
   );
 }
+
 
