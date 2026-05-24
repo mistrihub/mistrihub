@@ -1,6 +1,6 @@
 import { demoWorkers } from "@/lib/demo-data";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
-import type { Review, Worker, WorkerFilters } from "@/types/worker";
+import type { Review, WorkPost, Worker, WorkerFilters } from "@/types/worker";
 
 type WorkerRow = {
   id: string;
@@ -25,7 +25,17 @@ type WorkerRow = {
   created_at?: string;
 };
 
-type ReviewRow = {
+
+type WorkPostRow = {
+  id: string;
+  worker_id: string;
+  media_url: string;
+  media_type: "image" | "video";
+  caption: string | null;
+  like_count: number;
+  comment_count: number;
+  created_at: string;
+};type ReviewRow = {
   id: string;
   worker_id: string;
   customer_name: string | null;
@@ -58,7 +68,19 @@ function mapWorker(row: WorkerRow): Worker {
   };
 }
 
-function mapReview(row: ReviewRow): Review {
+
+function mapWorkPost(row: WorkPostRow): WorkPost {
+  return {
+    id: row.id,
+    workerId: row.worker_id,
+    mediaUrl: row.media_url,
+    mediaType: row.media_type,
+    caption: row.caption || "Recent work update",
+    likeCount: row.like_count,
+    commentCount: row.comment_count,
+    createdAt: row.created_at
+  };
+}function mapReview(row: ReviewRow): Review {
   return {
     id: row.id,
     workerId: row.worker_id,
@@ -187,4 +209,34 @@ export async function getReviews(workerId: string): Promise<Review[]> {
   }
 
   return (data as ReviewRow[]).map(mapReview);
+}
+
+export async function getWorkPosts(worker: Worker): Promise<WorkPost[]> {
+  const galleryPosts = worker.gallery.map((image, index) => ({
+    id: `${worker.id}-gallery-${index}`,
+    workerId: worker.id,
+    mediaUrl: image,
+    mediaType: "image" as const,
+    caption: `${worker.category} work sample ${index + 1}`,
+    likeCount: Math.max(3, Math.round(worker.rating * 3) + index),
+    commentCount: index,
+    createdAt: new Date().toISOString()
+  }));
+
+  if (!hasSupabaseConfig || !supabase) {
+    return galleryPosts;
+  }
+
+  const { data, error } = await supabase
+    .from("work_posts")
+    .select("*")
+    .eq("worker_id", worker.id)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return galleryPosts;
+  }
+
+  const posts = (data as WorkPostRow[]).map(mapWorkPost);
+  return posts.length > 0 ? posts : galleryPosts;
 }
