@@ -45,9 +45,9 @@ export function ReviewSection({ workerId, reviews }: { workerId: string; reviews
 
   return (
     <section className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
         <p className="text-sm font-bold uppercase tracking-wide text-brand">Customer reviews</p>
-        <h2 className="mt-2 text-2xl font-black text-ink">Share your experience</h2>
+        <h2 className="mt-2 text-xl font-black text-ink sm:text-2xl">Share your experience</h2>
         <div className="mt-5 space-y-4">
           <label className="block">
             <span className="text-sm font-bold text-slate-700">Your name</span>
@@ -61,7 +61,7 @@ export function ReviewSection({ workerId, reviews }: { workerId: string; reviews
                   key={value}
                   type="button"
                   onClick={() => setRating(value)}
-                  className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-amber-500 transition hover:border-amber-400"
+                  className="grid h-10 w-10 place-items-center rounded-lg bg-white text-amber-500 shadow-sm transition hover:bg-amber-50"
                   aria-label={`${value} star rating`}
                 >
                   <Star className={`h-5 w-5 ${value <= rating ? "fill-current" : ""}`} aria-hidden="true" />
@@ -93,12 +93,12 @@ export function ReviewSection({ workerId, reviews }: { workerId: string; reviews
 
       <div className="space-y-3">
         {reviews.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
+          <div className="rounded-xl bg-white p-5 text-slate-600 shadow-sm">
             No reviews yet. Be the first customer to rate this worker.
           </div>
         ) : (
           reviews.map((review) => (
-            <article key={review.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <article key={review.id} className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="font-black text-ink">{review.customerName}</h3>
@@ -117,3 +117,4 @@ export function ReviewSection({ workerId, reviews }: { workerId: string; reviews
     </section>
   );
 }
+
