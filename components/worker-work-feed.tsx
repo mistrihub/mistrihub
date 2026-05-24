@@ -380,8 +380,8 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
         </div>
       )}
       {lightboxPost ? (
-        <div className="fixed inset-0 z-50 grid h-screen w-screen place-items-center bg-black/90 p-3 sm:p-6" role="dialog" aria-modal="true">
-          <div className="relative grid h-full w-full max-w-6xl grid-rows-[auto_1fr] overflow-hidden rounded-xl bg-neutral-950 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex h-dvh w-screen items-center justify-center overflow-y-auto bg-black/90 p-3 sm:p-6" role="dialog" aria-modal="true">
+          <div className="relative flex max-h-[96dvh] w-full max-w-[96vw] flex-col overflow-hidden rounded-xl bg-neutral-950 shadow-2xl">
             <div className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 bg-neutral-950 px-4 py-3 pr-16 text-white">
               <div className="min-w-0">
                 <p className="truncate text-sm font-black sm:text-base">{worker.name}</p>
@@ -396,11 +396,11 @@ export function WorkerWorkFeed({ worker, posts }: { worker: Worker; posts: WorkP
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
-            <div className="grid min-h-0 place-items-center bg-black p-2 sm:p-4">
+            <div className="flex min-h-0 flex-1 items-center justify-center bg-black p-2 sm:p-4">
               {lightboxPost.mediaType === "video" ? (
-                <video ref={lightboxVideoRef} className="h-full max-h-full w-full max-w-full object-contain" src={lightboxPost.mediaUrl} controls autoPlay playsInline preload="auto" />
+                <video ref={lightboxVideoRef} className="h-auto max-h-[90dvh] w-auto max-w-full object-contain" src={lightboxPost.mediaUrl} controls autoPlay playsInline preload="auto" />
               ) : (
-                <img src={lightboxPost.mediaUrl} alt={`${worker.name} work update full view`} className="h-full max-h-full w-full max-w-full object-contain" decoding="async" />
+                <img src={lightboxPost.mediaUrl} alt={`${worker.name} work update full view`} className="h-auto max-h-[90dvh] w-auto max-w-full object-contain" decoding="async" />
               )}
             </div>
           </div>
@@ -435,6 +435,7 @@ function CommentBox({ onSubmit }: { onSubmit: (comment: string) => void }) {
     </form>
   );
 }
+
 
 
 
