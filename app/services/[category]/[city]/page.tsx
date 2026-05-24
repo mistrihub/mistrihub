@@ -80,10 +80,10 @@ export default async function ServiceCityPage({ params }: ServiceCityPageProps) 
         <div className="grid gap-8 lg:grid-cols-[1fr_340px] lg:items-start">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-brand">MistriHub services</p>
-            <h1 className="mt-2 text-4xl font-black leading-tight text-ink sm:text-5xl">
+            <h1 className="mt-2 text-3xl font-black leading-tight text-ink sm:text-5xl">
               Top {serviceCategory.name}s in {cityName}
             </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+            <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
               Find trusted {serviceCategory.name.toLowerCase()} workers in {cityName} for home, shop, office, and small-site work. Compare ratings, experience, location, and contact directly on WhatsApp.
             </p>
             <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-700">
@@ -96,7 +96,7 @@ export default async function ServiceCityPage({ params }: ServiceCityPageProps) 
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-xl bg-slate-50 p-4 sm:p-5">
             <h2 className="text-xl font-black text-ink">Popular {serviceCategory.name} work</h2>
             <ul className="mt-4 space-y-3">
               {useCases.map((useCase) => (
@@ -114,14 +114,14 @@ export default async function ServiceCityPage({ params }: ServiceCityPageProps) 
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
-            <h2 className="text-2xl font-black text-ink">How to choose a good {serviceCategory.name.toLowerCase()} in {cityName}</h2>
+          <div className="rounded-xl bg-slate-50 p-4 sm:p-6">
+            <h2 className="text-xl font-black text-ink sm:text-2xl">How to choose a good {serviceCategory.name.toLowerCase()} in {cityName}</h2>
             <p className="mt-4 leading-8 text-slate-600">
               Check the worker profile photo, service details, experience, customer rating, review count, and nearby location before contacting. MistriHub keeps the process simple so you can shortlist workers quickly and speak with them directly on WhatsApp.
             </p>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
-            <h2 className="text-2xl font-black text-ink">FAQs</h2>
+          <div className="rounded-xl bg-slate-50 p-4 sm:p-6">
+            <h2 className="text-xl font-black text-ink sm:text-2xl">FAQs</h2>
             <div className="mt-4 space-y-4 text-slate-600">
               <p><strong className="text-ink">Can I call directly?</strong><br />Yes. Worker profiles include WhatsApp and call options when provided.</p>
               <p><strong className="text-ink">Does MistriHub take payment?</strong><br />No. This MVP helps customers discover and contact workers directly.</p>
@@ -129,14 +129,14 @@ export default async function ServiceCityPage({ params }: ServiceCityPageProps) 
           </div>
         </div>
 
-        <div className="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-black text-ink">Related city searches</h2>
+        <div className="mt-12 rounded-xl bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="text-xl font-black text-ink sm:text-2xl">Related city searches</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             {relatedCities.map((relatedCity) => (
               <Link
                 key={relatedCity}
                 href={`/services/${serviceCategory.slug}/${cityToSlug(relatedCity)}`}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-brand hover:text-brand"
+                className="inline-flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 transition hover:text-brand"
               >
                 {serviceCategory.name} in {relatedCity}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -148,3 +148,4 @@ export default async function ServiceCityPage({ params }: ServiceCityPageProps) 
     </section>
   );
 }
+
