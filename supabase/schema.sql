@@ -80,7 +80,147 @@ to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
-drop policy if exists "Workers delete own work posts" on public.work_posts;
+
+alter table public.work_posts
+add column if not exists share_count integer not null default 0;
+
+create table if not exists public.work_post_likes (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references public.work_posts(id) on delete cascade,
+  visitor_id text not null,
+  created_at timestamptz not null default now(),
+  unique (post_id, visitor_id)
+);
+
+create table if not exists public.work_post_comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references public.work_posts(id) on delete cascade,
+  visitor_id text not null,
+  visitor_name text not null default 'Guest',
+  comment_text text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.work_post_shares (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references public.work_posts(id) on delete cascade,
+  visitor_id text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.worker_follows (
+  id uuid primary key default gen_random_uuid(),
+  worker_id text not null references public.workers(id) on delete cascade,
+  visitor_id text not null,
+  created_at timestamptz not null default now(),
+  unique (worker_id, visitor_id)
+);
+
+create index if not exists work_post_likes_post_id_idx on public.work_post_likes(post_id);
+create index if not exists work_post_comments_post_id_idx on public.work_post_comments(post_id);
+create index if not exists work_post_shares_post_id_idx on public.work_post_shares(post_id);
+create index if not exists worker_follows_worker_id_idx on public.worker_follows(worker_id);
+
+alter table public.work_post_likes enable row level security;
+alter table public.work_post_comments enable row level security;
+alter table public.work_post_shares enable row level security;
+alter table public.worker_follows enable row level security;
+
+drop policy if exists "Work post likes are public" on public.work_post_likes;
+create policy "Work post likes are public"
+on public.work_post_likes for select
+using (true);
+
+drop policy if exists "Anyone can like work posts" on public.work_post_likes;
+create policy "Anyone can like work posts"
+on public.work_post_likes for insert
+with check (true);
+
+drop policy if exists "Work post comments are public" on public.work_post_comments;
+create policy "Work post comments are public"
+on public.work_post_comments for select
+using (true);
+
+drop policy if exists "Anyone can comment on work posts" on public.work_post_comments;
+create policy "Anyone can comment on work posts"
+on public.work_post_comments for insert
+with check (length(trim(comment_text)) between 1 and 500);
+
+drop policy if exists "Work post shares are public" on public.work_post_shares;
+create policy "Work post shares are public"
+on public.work_post_shares for select
+using (true);
+
+drop policy if exists "Anyone can share work posts" on public.work_post_shares;
+create policy "Anyone can share work posts"
+on public.work_post_shares for insert
+with check (true);
+
+drop policy if exists "Worker follows are public" on public.worker_follows;
+create policy "Worker follows are public"
+on public.worker_follows for select
+using (true);
+
+drop policy if exists "Anyone can follow workers" on public.worker_follows;
+create policy "Anyone can follow workers"
+on public.worker_follows for insert
+with check (true);
+
+create or replace function public.sync_work_post_counts()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_table_name = 'work_post_likes' then
+    if tg_op = 'DELETE' then
+      update public.work_posts set like_count = greatest(like_count - 1, 0) where id = old.post_id;
+      return old;
+    end if;
+    update public.work_posts set like_count = like_count + 1 where id = new.post_id;
+    return new;
+  end if;
+
+  if tg_table_name = 'work_post_comments' then
+    if tg_op = 'DELETE' then
+      update public.work_posts set comment_count = greatest(comment_count - 1, 0) where id = old.post_id;
+      return old;
+    end if;
+    update public.work_posts set comment_count = comment_count + 1 where id = new.post_id;
+    return new;
+  end if;
+
+  if tg_table_name = 'work_post_shares' then
+    if tg_op = 'DELETE' then
+      update public.work_posts set share_count = greatest(share_count - 1, 0) where id = old.post_id;
+      return old;
+    end if;
+    update public.work_posts set share_count = share_count + 1 where id = new.post_id;
+    return new;
+  end if;
+
+  return coalesce(new, old);
+end;
+$$;
+
+drop trigger if exists sync_work_post_likes_count on public.work_post_likes;
+create trigger sync_work_post_likes_count
+after insert or delete on public.work_post_likes
+for each row
+execute function public.sync_work_post_counts();
+
+drop trigger if exists sync_work_post_comments_count on public.work_post_comments;
+create trigger sync_work_post_comments_count
+after insert or delete on public.work_post_comments
+for each row
+execute function public.sync_work_post_counts();
+
+drop trigger if exists sync_work_post_shares_count on public.work_post_shares;
+create trigger sync_work_post_shares_count
+after insert or delete on public.work_post_shares
+for each row
+execute function public.sync_work_post_counts();`r`n`r`ndrop policy if exists "Workers delete own work posts" on public.work_posts;
 create policy "Workers delete own work posts"
 on public.work_posts for delete
 to authenticated
@@ -297,5 +437,6 @@ on conflict do nothing;
 
 select public.refresh_worker_rating(id)
 from public.workers;
+
 
 
