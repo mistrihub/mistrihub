@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CategoryGrid } from "@/components/category-grid";
 import { SearchForm } from "@/components/search-form";
 import { LocationNearbyWorkers } from "@/components/location-nearby-workers";
+import { TopWorkUpdates } from "@/components/top-work-updates";
 import { WorkerList } from "@/components/worker-list";
 import { getFeaturedWorkers, getWorkers } from "@/lib/workers";
 
@@ -100,6 +101,8 @@ export default async function Home({ searchParams }: HomeProps) {
 
       <LocationNearbyWorkers />
 
+      <TopWorkUpdates />
+
       <section id="categories" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-bold uppercase tracking-wide text-brand">Categories</p>
@@ -113,28 +116,7 @@ export default async function Home({ searchParams }: HomeProps) {
           </Link>
         </div>
       </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="rounded-xl bg-white p-5 shadow-soft sm:p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-wide text-brand">Nearby discovery</p>
-              <h2 className="mt-2 text-2xl font-black text-ink">Find top-rated workers by city</h2>
-              <p className="mt-2 text-slate-600">Browse sections like top electricians and top plumbers, ranked by customer ratings.</p>
-            </div>
-            <Link
-              href="/nearby"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition hover:bg-teal-800"
-            >
-              Explore nearby
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-
-      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
+<section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
         <div className="rounded-xl bg-slate-50 p-5 sm:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -180,6 +162,9 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
+
+
 
 
 
