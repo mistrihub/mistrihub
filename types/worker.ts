@@ -33,7 +33,7 @@ export type Worker = {
   shortDescription: string;
   bio: string;
   serviceDetails: string[];
-  gallery: string[];
+  gallery?: string[];
   availableToday: boolean;
   startingPrice: number;
 };
@@ -74,4 +74,5 @@ export type WorkPostComment = {
   commentText: string;
   createdAt: string;
 };
+
 
