@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { CategoryGrid } from "@/components/category-grid";
@@ -36,14 +36,11 @@ export default async function Home({ searchParams }: HomeProps) {
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-sm font-semibold text-brand">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              ??? ?? ???? ???????? ???? ????? ?????????? ?? ??????
-            </div>
+              {"\u0936\u0939\u0930 \u0915\u0947 \u0938\u092c\u0938\u0947 \u092d\u0930\u094b\u0938\u0947\u092e\u0902\u0926 \u0932\u094b\u0915\u0932 \u0935\u0930\u094d\u0915\u0930 \u092a\u094d\u0932\u0947\u091f\u092b\u0949\u0930\u094d\u092e \u0938\u0947 \u091c\u0941\u095c\u0947\u0902\u0964 \u0906\u091c \u0939\u0940 \u092b\u094d\u0930\u0940 \u092e\u0947\u0902 \u0905\u0915\u093e\u0909\u0902\u091f \u092c\u0928\u093e\u090f\u0902 \u0914\u0930 \u0905\u092a\u0928\u0947 \u0906\u0938-\u092a\u093e\u0938 \u0915\u093e\u092e \u092a\u093e\u090f\u0902\u0964"}</div>
             <h1 className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
               Find Trusted Local Workers Near You
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-              ?? ?? ???? ??? ?????? ????? ?? ???? ??-??? ??? ?????
-            </p>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">Search trusted workers by category, city, rating, and real work updates.</p>
             <div className="mt-8">
               <Suspense>
                 <SearchForm />
@@ -102,7 +99,6 @@ export default async function Home({ searchParams }: HomeProps) {
 
       <section id="categories" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <p className="text-sm font-bold uppercase tracking-wide text-brand">Categories</p>
           <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">Book the help you need</h2>
         </div>
         <CategoryGrid limit={8} />
@@ -117,7 +113,6 @@ export default async function Home({ searchParams }: HomeProps) {
         <div className="rounded-xl bg-slate-50 p-5 sm:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-wide text-brand">Popular searches</p>
               <h2 className="mt-2 text-2xl font-black text-ink">Local services people search for</h2>
               <p className="mt-2 text-slate-600">Browse city pages made for real local searches like electricians, plumbers, AC repair, labour, and masonry work.</p>
             </div>
@@ -145,7 +140,6 @@ export default async function Home({ searchParams }: HomeProps) {
       <section id="workers" className="bg-white">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="mb-6">
-            <p className="text-sm font-bold uppercase tracking-wide text-brand">Workers</p>
             <h2 className="mt-2 text-3xl font-black text-ink">
               {params.category || params.location || params.rating || params.sort ? "Search results" : "Featured workers"}
             </h2>
@@ -159,6 +153,8 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
+
 
 
 
