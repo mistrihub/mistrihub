@@ -31,7 +31,7 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <>
       <section className="bg-white">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.05fr_0.95fr] md:items-center lg:px-8 lg:py-16">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1.65fr)_320px] lg:items-center lg:px-8 lg:py-16">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-sm font-semibold text-brand">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
@@ -63,13 +63,13 @@ export default async function Home({ searchParams }: HomeProps) {
               </span>
             </div>
           </div>
-          <div className="hidden rounded-xl bg-slate-50 p-4 shadow-soft md:block">
+          <div className="hidden rounded-xl bg-slate-50 p-3 shadow-soft lg:block">
 
-            <div className="rounded-lg bg-white p-5">
+            <div className="rounded-lg bg-white p-4">
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-brand">Live availability</p>
-                  <h2 className="text-2xl font-black text-ink">Top workers</h2>
+                  <h2 className="text-xl font-black text-ink">Top workers</h2>
                 </div>
                 <ShieldCheck className="h-8 w-8 text-brand" aria-hidden="true" />
               </div>
@@ -177,6 +177,7 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
 
