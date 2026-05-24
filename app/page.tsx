@@ -3,7 +3,6 @@ import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { CategoryGrid } from "@/components/category-grid";
 import { SearchForm } from "@/components/search-form";
-import { LocationNearbyWorkers } from "@/components/location-nearby-workers";
 import { TopWorkUpdates } from "@/components/top-work-updates";
 import { WorkerList } from "@/components/worker-list";
 import { getFeaturedWorkers, getWorkers } from "@/lib/workers";
@@ -99,8 +98,6 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       </section>
 
-      <LocationNearbyWorkers />
-
       <TopWorkUpdates />
 
       <section id="categories" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -162,6 +159,8 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
+
 
 
 
