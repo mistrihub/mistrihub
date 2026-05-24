@@ -36,13 +36,13 @@ export default async function Home({ searchParams }: HomeProps) {
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-sm font-semibold text-brand">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Trusted local help, one WhatsApp away
+              ??? ?? ???? ???????? ???? ????? ?????????? ?? ??????
             </div>
             <h1 className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
-              Find reliable local workers near you in India.
+              Find Trusted Local Workers Near You
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-              Search electricians, plumbers, drivers, carpenters, mechanics, painters, and AC repair technicians. Compare profiles and contact directly.
+              ?? ?? ???? ??? ?????? ????? ?? ???? ??-??? ??? ?????
             </p>
             <div className="mt-8">
               <Suspense>
@@ -130,10 +130,10 @@ export default async function Home({ searchParams }: HomeProps) {
             {[
               ["Electrician in Delhi", "/services/electrician/delhi"],
               ["Plumber in Mumbai", "/services/plumber/mumbai"],
-              ["AC Repair in Bengaluru", "/services/ac-repair/bengaluru"],
+              ["AC/Cooler/Fridge Repair in Bengaluru", "/services/ac-repair/bengaluru"],
               ["Helper / Labour in Delhi", "/services/helper-labour/delhi"],
               ["Mason / Plaster in Pune", "/services/mason-plaster/pune"],
-              ["Carpenter in Hyderabad", "/services/carpenter/hyderabad"]
+              ["Carpenter Interior in Hyderabad", "/services/carpenter/hyderabad"]
             ].map(([label, href]) => (
               <Link key={href} href={href} className="rounded-full bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:text-brand">
                 {label}
@@ -159,6 +159,7 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
 
