@@ -67,6 +67,10 @@ export type WorkPost = {
   createdAt: string;
 };
 
+export type WorkPostWithWorker = WorkPost & {
+  worker: Pick<Worker, "id" | "name" | "category" | "city" | "profilePhoto">;
+};
+
 export type WorkPostComment = {
   id: string;
   postId: string;
@@ -74,5 +78,3 @@ export type WorkPostComment = {
   commentText: string;
   createdAt: string;
 };
-
-
