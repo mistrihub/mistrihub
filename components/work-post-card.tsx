@@ -35,6 +35,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   const [commentOpen, setCommentOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
   const lightboxVideoRef = useRef<HTMLVideoElement | null>(null);
   const [comments, setComments] = useState<WorkPostComment[]>(post.comments ?? []);
   const [counts, setCounts] = useState({ likes: post.likeCount, comments: post.commentCount, shares: post.shareCount });
@@ -168,7 +169,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
       <button type="button" onClick={() => setLightboxOpen(true)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-0" aria-label="Open media full view">
         <div className="flex max-h-[520px] min-h-48 w-full items-center justify-center bg-black/95">
           {post.mediaType === "video" ? (
-            <video className="h-auto max-h-[520px] w-auto max-w-full object-contain" src={post.mediaUrl} autoPlay muted loop playsInline preload="metadata" />
+            <video ref={previewVideoRef} className="h-auto max-h-[520px] w-auto max-w-full object-contain" src={post.mediaUrl} autoPlay loop playsInline preload="metadata" />
           ) : (
             <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-auto max-h-[520px] w-auto max-w-full object-contain" loading="lazy" decoding="async" />
           )}
@@ -264,6 +265,8 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     </article>
   );
 }
+
+
 
 
 
