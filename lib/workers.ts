@@ -1,6 +1,6 @@
 import { demoWorkers } from "@/lib/demo-data";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
-import type { Review, WorkPost, Worker, WorkerFilters } from "@/types/worker";
+import type { Review, WorkPost, WorkPostWithWorker, Worker, WorkerFilters } from "@/types/worker";
 
 type WorkerRow = {
   id: string;
@@ -25,7 +25,6 @@ type WorkerRow = {
   created_at?: string;
 };
 
-
 type WorkPostRow = {
   id: string;
   worker_id: string;
@@ -36,7 +35,9 @@ type WorkPostRow = {
   comment_count: number;
   share_count?: number;
   created_at: string;
-};type ReviewRow = {
+};
+
+type ReviewRow = {
   id: string;
   worker_id: string;
   customer_name: string | null;
@@ -44,6 +45,9 @@ type WorkPostRow = {
   review_text: string | null;
   created_at: string;
 };
+
+const workerSelect =
+  "id,user_id,name,category,category_slug,experience_years,rating,review_count,location,city,phone,whatsapp,profile_photo,short_description,bio,service_details,available_today,starting_price,created_at";
 
 function mapWorker(row: WorkerRow): Worker {
   return {
@@ -69,7 +73,6 @@ function mapWorker(row: WorkerRow): Worker {
   };
 }
 
-
 function mapWorkPost(row: WorkPostRow): WorkPost {
   return {
     id: row.id,
@@ -82,11 +85,13 @@ function mapWorkPost(row: WorkPostRow): WorkPost {
     shareCount: row.share_count ?? 0,
     createdAt: row.created_at
   };
-}function mapReview(row: ReviewRow): Review {
+}
+
+function mapReview(row: ReviewRow): Review {
   return {
     id: row.id,
     workerId: row.worker_id,
-    customerName: row.customer_name || "LocalPro customer",
+    customerName: row.customer_name || "MistriHub customer",
     rating: row.rating,
     reviewText: row.review_text || "",
     createdAt: row.created_at
@@ -123,12 +128,39 @@ function sortWorkers(workers: Worker[], sort: WorkerFilters["sort"] = "rating") 
   });
 }
 
+function demoWorkPosts(limit?: number): WorkPostWithWorker[] {
+  const posts = demoWorkers.flatMap((worker) =>
+    (worker.gallery ?? []).map((image, index) => ({
+      id: `${worker.id}-gallery-${index}`,
+      workerId: worker.id,
+      mediaUrl: image,
+      mediaType: "image" as const,
+      caption: `${worker.category} work sample ${index + 1}`,
+      likeCount: Math.max(3, Math.round(worker.rating * 4) + index),
+      commentCount: index + 1,
+      shareCount: index,
+      comments: [],
+      createdAt: new Date(Date.now() - index * 86400000).toISOString(),
+      worker: {
+        id: worker.id,
+        name: worker.name,
+        category: worker.category,
+        city: worker.city,
+        profilePhoto: worker.profilePhoto
+      }
+    }))
+  );
+
+  const sorted = posts.sort((a, b) => b.likeCount - a.likeCount || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return typeof limit === "number" ? sorted.slice(0, limit) : sorted;
+}
+
 export async function getWorkers(filters: WorkerFilters = {}): Promise<Worker[]> {
   if (!hasSupabaseConfig || !supabase) {
     return filterDemoWorkers(filters);
   }
 
-  let query = supabase.from("workers").select("id,user_id,name,category,category_slug,experience_years,rating,review_count,location,city,phone,whatsapp,profile_photo,short_description,bio,service_details,available_today,starting_price,created_at");
+  let query = supabase.from("workers").select(workerSelect);
 
   if (filters.category) {
     query = query.eq("category_slug", filters.category);
@@ -164,7 +196,7 @@ export async function getWorkerById(id: string): Promise<Worker | null> {
     return demoWorkers.find((worker) => worker.id === id) ?? null;
   }
 
-  const { data, error } = await supabase.from("workers").select("id,user_id,name,category,category_slug,experience_years,rating,review_count,location,city,phone,whatsapp,profile_photo,short_description,bio,service_details,available_today,starting_price,created_at").eq("id", id).single();
+  const { data, error } = await supabase.from("workers").select(workerSelect).eq("id", id).single();
 
   if (error || !data) {
     return demoWorkers.find((worker) => worker.id === id) ?? null;
@@ -245,5 +277,50 @@ export async function getWorkPosts(worker: Worker): Promise<WorkPost[]> {
   return posts.length > 0 ? posts : galleryPosts;
 }
 
+export async function getAllWorkPosts(limit?: number): Promise<WorkPostWithWorker[]> {
+  if (!hasSupabaseConfig || !supabase) {
+    return demoWorkPosts(limit);
+  }
 
+  let query = supabase.from("work_posts").select("*").order("like_count", { ascending: false }).order("created_at", { ascending: false });
 
+  if (typeof limit === "number") {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data || data.length === 0) {
+    return demoWorkPosts(limit);
+  }
+
+  const posts = (data as WorkPostRow[]).map(mapWorkPost);
+  const workerIds = Array.from(new Set(posts.map((post) => post.workerId)));
+
+  const { data: workerRows, error: workersError } = await supabase.from("workers").select(workerSelect).in("id", workerIds);
+
+  if (workersError || !workerRows) {
+    return demoWorkPosts(limit);
+  }
+
+  const workersById = new Map((workerRows as WorkerRow[]).map((row) => [row.id, mapWorker(row)]));
+
+  return posts
+    .map((post) => {
+      const worker = workersById.get(post.workerId);
+
+      if (!worker) return null;
+
+      return {
+        ...post,
+        worker: {
+          id: worker.id,
+          name: worker.name,
+          category: worker.category,
+          city: worker.city,
+          profilePhoto: worker.profilePhoto
+        }
+      };
+    })
+    .filter((post): post is WorkPostWithWorker => Boolean(post));
+}
