@@ -39,6 +39,8 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   const [liked, setLiked] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [showSoundPrompt, setShowSoundPrompt] = useState(false);
   const [commentText, setCommentText] = useState("");
   const previewVideoRef = useRef<HTMLVideoElement | null>(null);
   const lightboxVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -47,6 +49,11 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   const profileUrl = useMemo(() => (typeof window === "undefined" ? `/workers/${post.worker.id}` : `${window.location.origin}/workers/${post.worker.id}`), [post.worker.id]);
   const isDemoPost = post.id.includes("gallery");
   const postVideoId = `work-video-${post.id}`;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setSoundEnabled(window.localStorage.getItem("mistrihub_sound_enabled") === "true");
+  }, []);
+
   useEffect(() => {
     if (post.mediaType !== "video") return;
 
@@ -61,10 +68,14 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
         return;
       }
 
-      activeVideo.muted = false;
-      activeVideo.volume = 1;
-      void activeVideo.play().catch(() => {
+      activeVideo.muted = !soundEnabled;
+      activeVideo.volume = soundEnabled ? 1 : 0;
+      void activeVideo.play().then(() => {
+        setShowSoundPrompt(!soundEnabled);
+      }).catch(() => {
         activeVideo.muted = true;
+        activeVideo.volume = 0;
+        setShowSoundPrompt(true);
         void activeVideo.play().catch(() => undefined);
       });
     }
@@ -89,12 +100,20 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
 
     window.addEventListener("mistrihub:feed-video-visible", playActiveVideo);
     observer.observe(activeVideo);
+    window.setTimeout(() => {
+      const rect = activeVideo.getBoundingClientRect();
+      const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+      const ratio = rect.height > 0 ? Math.max(0, visibleHeight / rect.height) : 0;
+      if (ratio >= 0.55) {
+        window.dispatchEvent(new CustomEvent<FeedVideoVisibilityDetail>("mistrihub:feed-video-visible", { detail: { id: postVideoId, ratio, video: activeVideo } }));
+      }
+    }, 250);
 
     return () => {
       observer.disconnect();
       window.removeEventListener("mistrihub:feed-video-visible", playActiveVideo);
     };
-  }, [post.mediaType, postVideoId]);
+  }, [post.mediaType, postVideoId, soundEnabled]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -218,18 +237,32 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     await navigator.clipboard?.writeText(profileUrl);
   }
 
+  function enableSound(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    const video = previewVideoRef.current;
+    setSoundEnabled(true);
+    setShowSoundPrompt(false);
+    window.localStorage.setItem("mistrihub_sound_enabled", "true");
+    if (!video) return;
+    video.muted = false;
+    video.volume = 1;
+    void video.play().catch(() => undefined);
+  }
   return (
     <article className="overflow-hidden rounded-xl bg-white shadow-sm transition hover:shadow-soft">
-      <button type="button" onClick={() => setLightboxOpen(true)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-0" aria-label="Open media full view">
-        <div className="flex max-h-[520px] min-h-48 w-full items-center justify-center bg-black/95">
+      <div role="button" tabIndex={0} onClick={() => setLightboxOpen(true)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setLightboxOpen(true); }} className="block w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-0" aria-label="Open media full view">
+        <div className="relative flex max-h-[520px] min-h-48 w-full items-center justify-center bg-black/95">
           {post.mediaType === "video" ? (
             <video ref={previewVideoRef} className="h-auto max-h-[520px] w-auto max-w-full object-contain" src={post.mediaUrl} autoPlay muted loop playsInline preload="auto" />
           ) : (
             <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-auto max-h-[520px] w-auto max-w-full object-contain" loading="lazy" decoding="async" />
           )}
+          {post.mediaType === "video" && showSoundPrompt ? (
+            <button type="button" onClick={enableSound} className="absolute bottom-3 right-3 rounded-full bg-white/95 px-3 py-1.5 text-xs font-black text-ink shadow-lg">Sound on</button>
+          ) : null}
         </div>
-      </button>
-
+      </div>
       <div className="p-4">
         <div className="flex items-center gap-3">
           <Link href={`/workers/${post.worker.id}`} className="shrink-0 focus-visible:outline-none focus-visible:ring-0" aria-label={`${post.worker.name} profile`}>
@@ -319,6 +352,20 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     </article>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
