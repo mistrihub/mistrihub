@@ -1,4 +1,4 @@
-import { categories } from "@/lib/categories";
+﻿import { categories } from "@/lib/categories";
 import type { CategorySlug } from "@/types/worker";
 
 export const seoCities = [
@@ -12,12 +12,26 @@ export const seoCities = [
   "Kolkata",
   "Chennai",
   "Lucknow",
-  "Patna"
+  "Patna",
+  "Muzaffarpur",
+  "Gaya",
+  "Ranchi",
+  "Noida",
+  "Gurugram",
+  "Ghaziabad",
+  "Faridabad",
+  "Surat",
+  "Indore",
+  "Bhopal",
+  "Kanpur",
+  "Nagpur",
+  "Varanasi"
 ];
 
 export const priorityServiceSlugs: CategorySlug[] = [
   "electrician",
   "plumber",
+  "driver",
   "ac-repair",
   "carpenter",
   "painter",
@@ -45,11 +59,27 @@ export function getCategoryBySlug(slug: string) {
 }
 
 export function getServicePageTitle(categoryName: string, city: string) {
-  return `Top ${categoryName}s in ${city} | MistriHub`;
+  return `${categoryName} Near Me in ${city} | Top Rated Local Workers - MistriHub`;
 }
 
 export function getServicePageDescription(categoryName: string, city: string) {
-  return `Find trusted ${categoryName.toLowerCase()} workers in ${city}. Compare ratings, experience, location, service details, and contact directly on WhatsApp with MistriHub.`;
+  return `Find trusted ${categoryName.toLowerCase()} near me in ${city}. Compare top-rated local workers by rating, experience, price, service area, and contact directly on WhatsApp. Fully free, no hidden cost.`;
+}
+
+export function getNearMeKeywords(categoryName: string, city: string) {
+  const service = categoryName.toLowerCase();
+  return [
+    `${service} near me`,
+    `${service} nearby`,
+    `${service} in ${city}`,
+    `best ${service} in ${city}`,
+    `top rated ${service} near me`,
+    `local ${service} in ${city}`,
+    `${service} contact number in ${city}`,
+    `${service} WhatsApp number in ${city}`,
+    `trusted ${service} near me`,
+    `free local worker platform ${city}`
+  ];
 }
 
 export function cityToSlug(city: string) {
@@ -60,3 +90,6 @@ export function slugToCity(slug: string) {
   const match = seoCities.find((city) => cityToSlug(city) === slug);
   return match ?? slug.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
+
+
+
