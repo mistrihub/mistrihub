@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { categories } from "@/lib/categories";
 import { cityToSlug, priorityServiceSlugs, seoCities } from "@/lib/seo-pages";
 
 export const metadata: Metadata = {
-  title: "Local Services by City",
-  description: "Browse MistriHub service pages by category and city, including electricians, plumbers, AC repair, helpers, labourers, and masons."
+  title: "Local Workers Near Me by City | MistriHub Services",
+  description: "Find electricians, plumbers, drivers, carpenters, mechanics, painters, AC repair, helpers, labourers, masons, and designers near you by Indian city."
 };
 
 export default function ServicesPage() {
@@ -15,8 +15,8 @@ export default function ServicesPage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
       <p className="text-sm font-bold uppercase tracking-wide text-brand">Service areas</p>
-      <h1 className="mt-2 text-4xl font-black text-ink">Find local workers by service and city</h1>
-      <p className="mt-4 max-w-3xl leading-8 text-slate-600">Browse useful MistriHub pages for popular services in major Indian cities. These pages help customers find rated workers and contact them directly on WhatsApp.</p>
+      <h1 className="mt-2 text-4xl font-black text-ink">Find Local Workers Near Me by Service and City</h1>
+      <p className="mt-4 max-w-3xl leading-8 text-slate-600">Browse MistriHub service pages for popular near me searches in Indian cities. Find rated workers, compare profiles, and contact directly on WhatsApp. Fully free, no hidden cost.</p>
       <div className="mt-8 grid gap-5 md:grid-cols-2">
         {visibleCategories.map((category) => (
           <article key={category.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -40,4 +40,5 @@ export default function ServicesPage() {
     </section>
   );
 }
+
 
