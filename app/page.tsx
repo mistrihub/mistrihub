@@ -40,7 +40,7 @@ export default async function Home({ searchParams }: HomeProps) {
             <h1 className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
               Find Trusted Local Workers Near You
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">Search trusted workers by category, city, rating, and real work updates.</p>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">आज ही फ्री में अकाउंट बनाएं और अपने आस-पास काम पाएं।</p>
             <div className="mt-8">
               <Suspense>
                 <SearchForm />
@@ -153,6 +153,7 @@ export default async function Home({ searchParams }: HomeProps) {
     </>
   );
 }
+
 
 
 
