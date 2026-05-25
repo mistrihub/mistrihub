@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import type { Session } from "@supabase/supabase-js";
+import type { AppSession } from "../lib/supabase";
 import { categories } from "../lib/categories";
 import { createWorkPost, getMyWorkerProfile, saveWorkerProfile, uploadMedia } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import type { CategorySlug, Worker } from "../types";
 
 export function DashboardScreen() {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<AppSession | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -176,3 +176,4 @@ const styles = StyleSheet.create({
   logout: { alignItems: "center", paddingVertical: 14 },
   logoutText: { color: "#be123c", fontWeight: "900" }
 });
+

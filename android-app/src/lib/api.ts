@@ -1,9 +1,8 @@
-import { categories } from "./categories";
-import { supabase } from "./supabase";
+﻿import { categories } from "./categories";
+import { getStoredSession, supabaseFetch, supabaseUrl } from "./supabase";
 import type { CategorySlug, Review, WorkPost, Worker } from "../types";
 
 const workerSelect = "id,user_id,name,category,category_slug,experience_years,rating,review_count,location,city,phone,whatsapp,profile_photo,short_description,bio,service_details,available_today,starting_price,created_at";
-
 const fallbackImage = "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=800&auto=format&fit=crop";
 
 export const demoWorkers: Worker[] = [
@@ -117,29 +116,42 @@ function mapPost(row: WorkPostRow): WorkPost {
   };
 }
 
+async function readJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  return text ? JSON.parse(text) : ([] as T);
+}
+
+function errorResult(message: string) {
+  return { data: null, error: { message } };
+}
+
 export async function getWorkers(filters: { category?: string; city?: string; rating?: number; sort?: "rating" | "experience" } = {}) {
-  let query = supabase.from("workers").select(workerSelect);
+  const params = new URLSearchParams({ select: workerSelect });
+  if (filters.category) params.set("category_slug", `eq.${filters.category}`);
+  if (filters.city) params.set("or", `(city.ilike.*${filters.city}*,location.ilike.*${filters.city}*)`);
+  if (filters.rating) params.set("rating", `gte.${filters.rating}`);
+  params.set("order", filters.sort === "experience" ? "experience_years.desc,rating.desc" : "rating.desc,review_count.desc");
 
-  if (filters.category) query = query.eq("category_slug", filters.category);
-  if (filters.city) query = query.or(`city.ilike.%${filters.city}%,location.ilike.%${filters.city}%`);
-  if (filters.rating) query = query.gte("rating", filters.rating);
-  query = filters.sort === "experience" ? query.order("experience_years", { ascending: false }) : query.order("rating", { ascending: false }).order("review_count", { ascending: false });
-
-  const { data, error } = await query;
-  if (error || !data) return demoWorkers;
-  return (data as WorkerRow[]).map(mapWorker);
+  const response = await supabaseFetch(`/rest/v1/workers?${params.toString()}`);
+  if (!response.ok) return demoWorkers;
+  const data = await readJson<WorkerRow[]>(response);
+  return data.length ? data.map(mapWorker) : demoWorkers;
 }
 
 export async function getWorkerById(id: string) {
-  const { data, error } = await supabase.from("workers").select(workerSelect).eq("id", id).maybeSingle();
-  if (error || !data) return demoWorkers.find((worker) => worker.id === id) ?? null;
-  return mapWorker(data as WorkerRow);
+  const params = new URLSearchParams({ select: workerSelect, id: `eq.${id}`, limit: "1" });
+  const response = await supabaseFetch(`/rest/v1/workers?${params.toString()}`);
+  if (!response.ok) return demoWorkers.find((worker) => worker.id === id) ?? null;
+  const data = await readJson<WorkerRow[]>(response);
+  return data[0] ? mapWorker(data[0]) : demoWorkers.find((worker) => worker.id === id) ?? null;
 }
 
 export async function getReviews(workerId: string): Promise<Review[]> {
-  const { data, error } = await supabase.from("reviews").select("*").eq("worker_id", workerId).order("created_at", { ascending: false });
-  if (error || !data) return [];
-  return data.map((item: any) => ({
+  const params = new URLSearchParams({ select: "*", worker_id: `eq.${workerId}`, order: "created_at.desc" });
+  const response = await supabaseFetch(`/rest/v1/reviews?${params.toString()}`);
+  if (!response.ok) return [];
+  const data = await readJson<any[]>(response);
+  return data.map((item) => ({
     id: item.id,
     workerId: item.worker_id,
     customerName: item.customer_name || "MistriHub customer",
@@ -150,19 +162,28 @@ export async function getReviews(workerId: string): Promise<Review[]> {
 }
 
 export async function addReview(workerId: string, rating: number, reviewText: string) {
-  return supabase.from("reviews").insert({ worker_id: workerId, customer_name: "App user", rating, review_text: reviewText });
+  const response = await supabaseFetch("/rest/v1/reviews", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ worker_id: workerId, customer_name: "App user", rating, review_text: reviewText })
+  });
+  return response.ok ? { data: null, error: null } : errorResult(await response.text());
 }
 
 export async function getWorkPosts(limit = 30): Promise<WorkPost[]> {
-  const { data, error } = await supabase.from("work_posts").select("*").order("created_at", { ascending: false }).limit(limit);
-  if (error || !data) return [];
-  return (data as WorkPostRow[]).map(mapPost);
+  const params = new URLSearchParams({ select: "*", order: "created_at.desc", limit: String(limit) });
+  const response = await supabaseFetch(`/rest/v1/work_posts?${params.toString()}`);
+  if (!response.ok) return [];
+  const data = await readJson<WorkPostRow[]>(response);
+  return data.map(mapPost);
 }
 
 export async function getMyWorkerProfile(userId: string) {
-  const { data, error } = await supabase.from("workers").select(workerSelect).eq("user_id", userId).maybeSingle();
-  if (error || !data) return null;
-  return mapWorker(data as WorkerRow);
+  const params = new URLSearchParams({ select: workerSelect, user_id: `eq.${userId}`, limit: "1" });
+  const response = await supabaseFetch(`/rest/v1/workers?${params.toString()}`, {}, true);
+  if (!response.ok) return null;
+  const data = await readJson<WorkerRow[]>(response);
+  return data[0] ? mapWorker(data[0]) : null;
 }
 
 export async function saveWorkerProfile(userId: string, input: Partial<Worker>) {
@@ -184,22 +205,38 @@ export async function saveWorkerProfile(userId: string, input: Partial<Worker>) 
     available_today: true,
     starting_price: input.startingPrice ?? 0
   };
-
-  return supabase.from("workers").upsert(row, { onConflict: "user_id" }).select(workerSelect).single();
+  const response = await supabaseFetch("/rest/v1/workers?on_conflict=user_id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+    body: JSON.stringify(row)
+  }, true);
+  if (!response.ok) return errorResult(await response.text());
+  const data = await readJson<WorkerRow[]>(response);
+  return { data: data[0], error: null };
 }
 
 export async function uploadMedia(userId: string, uri: string, folder: "profile" | "work", mediaType: "image" | "video") {
+  const session = await getStoredSession();
+  if (!session) throw new Error("Please login first.");
   const response = await fetch(uri);
   const blob = await response.blob();
   const ext = mediaType === "video" ? "mp4" : "jpg";
   const path = `${userId}/${folder}/${Date.now()}.${ext}`;
   const contentType = mediaType === "video" ? "video/mp4" : "image/jpeg";
-  const { error } = await supabase.storage.from("worker-images").upload(path, blob, { contentType, upsert: true });
-  if (error) throw error;
-  const { data } = supabase.storage.from("worker-images").getPublicUrl(path);
-  return data.publicUrl;
+  const upload = await fetch(`${supabaseUrl}/storage/v1/object/worker-images/${path}`, {
+    method: "POST",
+    headers: { apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "", Authorization: `Bearer ${session.access_token}`, "Content-Type": contentType, "x-upsert": "true" },
+    body: blob as any
+  });
+  if (!upload.ok) throw new Error(await upload.text());
+  return `${supabaseUrl}/storage/v1/object/public/worker-images/${path}`;
 }
 
 export async function createWorkPost(workerId: string, mediaUrl: string, mediaType: "image" | "video", caption: string) {
-  return supabase.from("work_posts").insert({ worker_id: workerId, media_url: mediaUrl, media_type: mediaType, caption, like_count: 0, comment_count: 0, share_count: 0 });
+  const response = await supabaseFetch("/rest/v1/work_posts", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ worker_id: workerId, media_url: mediaUrl, media_type: mediaType, caption, like_count: 0, comment_count: 0, share_count: 0 })
+  }, true);
+  return response.ok ? { data: null, error: null } : errorResult(await response.text());
 }
