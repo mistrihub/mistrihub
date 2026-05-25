@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { SiteFooter } from "@/components/site-footer";
@@ -27,7 +27,11 @@ export const metadata: Metadata = {
     "plumber near me",
     "mason near me",
     "helper labour near me",
-    "AC repair near me"
+    "AC repair near me",
+    "worker near me",
+    "mistri near me",
+    "local service near me",
+    "home repair service India"
   ],
   alternates: {
     canonical: siteUrl
@@ -47,17 +51,27 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "MistriHub",
-    url: siteUrl,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${siteUrl}/?location={search_term_string}#workers`,
-      "query-input": "required name=search_term_string"
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "MistriHub",
+      url: siteUrl,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${siteUrl}/search?location={search_term_string}`,
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "MistriHub",
+      url: siteUrl,
+      logo: `${siteUrl}/icon.png`,
+      sameAs: [siteUrl]
     }
-  };
+  ];
 
   return (
     <html lang="en">
@@ -72,6 +86,9 @@ export default function RootLayout({
     </html>
   );
 }
+
+
+
 
 
 
