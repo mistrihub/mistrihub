@@ -118,47 +118,78 @@ function mapPost(row: WorkPostRow): WorkPost {
 
 async function readJson<T>(response: Response): Promise<T> {
   const text = await response.text();
-  return text ? JSON.parse(text) : ([] as T);
+  try {
+    return text ? JSON.parse(text) : ([] as T);
+  } catch {
+    return [] as T;
+  }
 }
 
 function errorResult(message: string) {
   return { data: null, error: { message } };
 }
 
-export async function getWorkers(filters: { category?: string; city?: string; rating?: number; sort?: "rating" | "experience" } = {}) {
-  const params = new URLSearchParams({ select: workerSelect });
-  if (filters.category) params.set("category_slug", `eq.${filters.category}`);
-  if (filters.city) params.set("or", `(city.ilike.*${filters.city}*,location.ilike.*${filters.city}*)`);
-  if (filters.rating) params.set("rating", `gte.${filters.rating}`);
-  params.set("order", filters.sort === "experience" ? "experience_years.desc,rating.desc" : "rating.desc,review_count.desc");
+function makeQuery(params: Record<string, string>) {
+  return Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== "")
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join("&");
+}
 
-  const response = await supabaseFetch(`/rest/v1/workers?${params.toString()}`);
-  if (!response.ok) return demoWorkers;
-  const data = await readJson<WorkerRow[]>(response);
-  return data.length ? data.map(mapWorker) : demoWorkers;
+function safeWorkers(workers: Worker[]) {
+  return workers.map((worker) => ({
+    ...worker,
+    rating: Number(worker.rating) || 0,
+    reviewCount: Number(worker.reviewCount) || 0,
+    experienceYears: Number(worker.experienceYears) || 0,
+    startingPrice: Number(worker.startingPrice) || 0,
+    serviceDetails: Array.isArray(worker.serviceDetails) ? worker.serviceDetails : []
+  }));
+}
+export async function getWorkers(filters: { category?: string; city?: string; rating?: number; sort?: "rating" | "experience" } = {}) {
+  try {
+    const params: Record<string, string> = { select: workerSelect };
+    if (filters.category) params.category_slug = `eq.${filters.category}`;
+    if (filters.city) params.or = `(city.ilike.*${filters.city}*,location.ilike.*${filters.city}*)`;
+    if (filters.rating) params.rating = `gte.${filters.rating}`;
+    params.order = filters.sort === "experience" ? "experience_years.desc,rating.desc" : "rating.desc,review_count.desc";
+
+    const response = await supabaseFetch(`/rest/v1/workers?${makeQuery(params)}`);
+    if (!response.ok) return demoWorkers;
+    const data = await readJson<WorkerRow[]>(response);
+    return data.length ? safeWorkers(data.map(mapWorker)) : demoWorkers;
+  } catch {
+    return demoWorkers;
+  }
 }
 
 export async function getWorkerById(id: string) {
-  const params = new URLSearchParams({ select: workerSelect, id: `eq.${id}`, limit: "1" });
-  const response = await supabaseFetch(`/rest/v1/workers?${params.toString()}`);
-  if (!response.ok) return demoWorkers.find((worker) => worker.id === id) ?? null;
-  const data = await readJson<WorkerRow[]>(response);
-  return data[0] ? mapWorker(data[0]) : demoWorkers.find((worker) => worker.id === id) ?? null;
+  try {
+    const response = await supabaseFetch(`/rest/v1/workers?${makeQuery({ select: workerSelect, id: `eq.${id}`, limit: "1" })}`);
+    if (!response.ok) return demoWorkers.find((worker) => worker.id === id) ?? null;
+    const data = await readJson<WorkerRow[]>(response);
+    return data[0] ? mapWorker(data[0]) : demoWorkers.find((worker) => worker.id === id) ?? null;
+  } catch {
+    return demoWorkers.find((worker) => worker.id === id) ?? null;
+  }
 }
 
 export async function getReviews(workerId: string): Promise<Review[]> {
-  const params = new URLSearchParams({ select: "*", worker_id: `eq.${workerId}`, order: "created_at.desc" });
-  const response = await supabaseFetch(`/rest/v1/reviews?${params.toString()}`);
-  if (!response.ok) return [];
-  const data = await readJson<any[]>(response);
-  return data.map((item) => ({
-    id: item.id,
-    workerId: item.worker_id,
-    customerName: item.customer_name || "MistriHub customer",
-    rating: item.rating,
-    reviewText: item.review_text || "",
-    createdAt: item.created_at
-  }));
+  try {
+    const response = await supabaseFetch(`/rest/v1/reviews?${makeQuery({ select: "*", worker_id: `eq.${workerId}`, order: "created_at.desc" })}`);
+    if (!response.ok) return [];
+    const data = await readJson<any[]>(response);
+    return data.map((item) => ({
+      id: item.id,
+      workerId: item.worker_id,
+      customerName: item.customer_name || "MistriHub customer",
+      rating: Number(item.rating) || 0,
+      reviewText: item.review_text || "",
+      createdAt: item.created_at
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function addReview(workerId: string, rating: number, reviewText: string) {
@@ -171,19 +202,25 @@ export async function addReview(workerId: string, rating: number, reviewText: st
 }
 
 export async function getWorkPosts(limit = 30): Promise<WorkPost[]> {
-  const params = new URLSearchParams({ select: "*", order: "created_at.desc", limit: String(limit) });
-  const response = await supabaseFetch(`/rest/v1/work_posts?${params.toString()}`);
-  if (!response.ok) return [];
-  const data = await readJson<WorkPostRow[]>(response);
-  return data.map(mapPost);
+  try {
+    const response = await supabaseFetch(`/rest/v1/work_posts?${makeQuery({ select: "*", order: "created_at.desc", limit: String(limit) })}`);
+    if (!response.ok) return [];
+    const data = await readJson<WorkPostRow[]>(response);
+    return data.map(mapPost);
+  } catch {
+    return [];
+  }
 }
 
 export async function getMyWorkerProfile(userId: string) {
-  const params = new URLSearchParams({ select: workerSelect, user_id: `eq.${userId}`, limit: "1" });
-  const response = await supabaseFetch(`/rest/v1/workers?${params.toString()}`, {}, true);
-  if (!response.ok) return null;
-  const data = await readJson<WorkerRow[]>(response);
-  return data[0] ? mapWorker(data[0]) : null;
+  try {
+    const response = await supabaseFetch(`/rest/v1/workers?${makeQuery({ select: workerSelect, user_id: `eq.${userId}`, limit: "1" })}`, {}, true);
+    if (!response.ok) return null;
+    const data = await readJson<WorkerRow[]>(response);
+    return data[0] ? mapWorker(data[0]) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function saveWorkerProfile(userId: string, input: Partial<Worker>) {
@@ -240,3 +277,5 @@ export async function createWorkPost(workerId: string, mediaUrl: string, mediaTy
   }, true);
   return response.ok ? { data: null, error: null } : errorResult(await response.text());
 }
+
+

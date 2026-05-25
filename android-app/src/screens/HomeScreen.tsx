@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { categories } from "../lib/categories";
 import { getWorkers } from "../lib/api";
@@ -13,9 +13,14 @@ export function HomeScreen({ onOpenWorker }: { onOpenWorker: (worker: Worker) =>
 
   async function load() {
     setLoading(true);
-    const data = await getWorkers({ category: category || undefined, city: city || undefined, sort: "rating" });
-    setWorkers(data);
-    setLoading(false);
+    try {
+      const data = await getWorkers({ category: category || undefined, city: city || undefined, sort: "rating" });
+      setWorkers(data);
+    } catch {
+      setWorkers([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -72,3 +77,4 @@ const styles = StyleSheet.create({
   apply: { alignSelf: "flex-start", backgroundColor: "#ccfbf1", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, marginBottom: 16 },
   applyText: { color: "#0f766e", fontWeight: "900" }
 });
+

@@ -19,8 +19,12 @@ function notify(event: string, session: AppSession | null) {
 }
 
 export async function getStoredSession() {
-  const raw = await AsyncStorage.getItem(sessionKey);
-  return raw ? (JSON.parse(raw) as AppSession) : null;
+  try {
+    const raw = await AsyncStorage.getItem(sessionKey);
+    return raw ? (JSON.parse(raw) as AppSession) : null;
+  } catch {
+    return null;
+  }
 }
 
 async function saveSession(session: AppSession | null) {
@@ -31,11 +35,23 @@ async function saveSession(session: AppSession | null) {
 
 export async function supabaseFetch(path: string, init: RequestInit = {}, useUserToken = false) {
   const session = useUserToken ? await getStoredSession() : null;
-  const headers = new Headers(init.headers);
-  headers.set("apikey", supabaseAnonKey);
-  headers.set("Authorization", `Bearer ${session?.access_token ?? supabaseAnonKey}`);
-  if (!headers.has("Content-Type") && init.body) headers.set("Content-Type", "application/json");
+  const customHeaders = (init.headers ?? {}) as Record<string, string>;
+  const headers: Record<string, string> = {
+    ...customHeaders,
+    apikey: supabaseAnonKey,
+    Authorization: `Bearer ${session?.access_token ?? supabaseAnonKey}`
+  };
+  if (!headers["Content-Type"] && init.body) headers["Content-Type"] = "application/json";
   return fetch(`${supabaseUrl}${path}`, { ...init, headers });
+}
+
+async function parseAuthResponse(response: Response) {
+  const text = await response.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return { msg: text || "Request failed" };
+  }
 }
 
 export const supabase = {
@@ -48,27 +64,35 @@ export const supabase = {
       return { data: { subscription: { unsubscribe: () => { listeners.delete(callback); } } } };
     },
     async signInWithPassword({ email, password }: { email: string; password: string }) {
-      const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-        method: "POST",
-        headers: { apikey: supabaseAnonKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json();
-      if (!response.ok) return { data: null, error: { message: data.error_description || data.msg || "Login failed" } };
-      const session: AppSession = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user };
-      await saveSession(session);
-      return { data: { session, user: data.user }, error: null };
+      try {
+        const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+          method: "POST",
+          headers: { apikey: supabaseAnonKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await parseAuthResponse(response);
+        if (!response.ok) return { data: null, error: { message: data.error_description || data.msg || "Login failed" } };
+        const session: AppSession = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user };
+        await saveSession(session);
+        return { data: { session, user: data.user }, error: null };
+      } catch (error: any) {
+        return { data: null, error: { message: error?.message || "Login failed" } };
+      }
     },
     async signUp({ email, password }: { email: string; password: string }) {
-      const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
-        method: "POST",
-        headers: { apikey: supabaseAnonKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json();
-      if (!response.ok) return { data: null, error: { message: data.error_description || data.msg || "Signup failed" } };
-      if (data.access_token && data.user) await saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user });
-      return { data, error: null };
+      try {
+        const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
+          method: "POST",
+          headers: { apikey: supabaseAnonKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await parseAuthResponse(response);
+        if (!response.ok) return { data: null, error: { message: data.error_description || data.msg || "Signup failed" } };
+        if (data.access_token && data.user) await saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user });
+        return { data, error: null };
+      } catch (error: any) {
+        return { data: null, error: { message: error?.message || "Signup failed" } };
+      }
     },
     async signOut() {
       await saveSession(null);
@@ -76,4 +100,3 @@ export const supabase = {
     }
   }
 };
-
