@@ -68,9 +68,18 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
         return;
       }
 
-      activeVideo.muted = !soundEnabled;
-      activeVideo.volume = soundEnabled ? 1 : 0;
+      activeVideo.muted = true;
+      activeVideo.volume = 0;
       void activeVideo.play().then(() => {
+        if (soundEnabled) {
+          activeVideo.muted = false;
+          activeVideo.volume = 1;
+          void activeVideo.play().catch(() => {
+            activeVideo.muted = true;
+            activeVideo.volume = 0;
+            setShowSoundPrompt(true);
+          });
+        }
         setShowSoundPrompt(!soundEnabled);
       }).catch(() => {
         activeVideo.muted = true;
@@ -80,11 +89,20 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
       });
     }
 
+    function requestVisiblePlay() {
+      const rect = activeVideo.getBoundingClientRect();
+      const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+      const ratio = rect.height > 0 ? Math.max(0, visibleHeight / rect.height) : 0;
+      if (ratio >= 0.45) {
+        window.dispatchEvent(new CustomEvent<FeedVideoVisibilityDetail>("mistrihub:feed-video-visible", { detail: { id: postVideoId, ratio, video: activeVideo } }));
+      }
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         const ratio = entry?.intersectionRatio ?? 0;
 
-        if (ratio < 0.55) {
+        if (ratio < 0.45) {
           activeVideo.pause();
           return;
         }
@@ -95,23 +113,25 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
           })
         );
       },
-      { threshold: [0, 0.55, 0.75, 0.9] }
+      { threshold: [0, 0.45, 0.65, 0.85] }
     );
 
     window.addEventListener("mistrihub:feed-video-visible", playActiveVideo);
+    window.addEventListener("focus", requestVisiblePlay);
+    document.addEventListener("visibilitychange", requestVisiblePlay);
+    activeVideo.addEventListener("loadeddata", requestVisiblePlay);
+    activeVideo.addEventListener("canplay", requestVisiblePlay);
     observer.observe(activeVideo);
-    window.setTimeout(() => {
-      const rect = activeVideo.getBoundingClientRect();
-      const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
-      const ratio = rect.height > 0 ? Math.max(0, visibleHeight / rect.height) : 0;
-      if (ratio >= 0.55) {
-        window.dispatchEvent(new CustomEvent<FeedVideoVisibilityDetail>("mistrihub:feed-video-visible", { detail: { id: postVideoId, ratio, video: activeVideo } }));
-      }
-    }, 250);
+    window.setTimeout(requestVisiblePlay, 150);
+    window.setTimeout(requestVisiblePlay, 600);
 
     return () => {
       observer.disconnect();
       window.removeEventListener("mistrihub:feed-video-visible", playActiveVideo);
+      window.removeEventListener("focus", requestVisiblePlay);
+      document.removeEventListener("visibilitychange", requestVisiblePlay);
+      activeVideo.removeEventListener("loadeddata", requestVisiblePlay);
+      activeVideo.removeEventListener("canplay", requestVisiblePlay);
     };
   }, [post.mediaType, postVideoId, soundEnabled]);
 
@@ -254,7 +274,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
       <div role="button" tabIndex={0} onClick={() => setLightboxOpen(true)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setLightboxOpen(true); }} className="block w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-0" aria-label="Open media full view">
         <div className="relative flex max-h-[520px] min-h-48 w-full items-center justify-center bg-black/95">
           {post.mediaType === "video" ? (
-            <video ref={previewVideoRef} className="h-auto max-h-[520px] w-auto max-w-full object-contain" src={post.mediaUrl} autoPlay muted loop playsInline preload="auto" />
+            <video ref={previewVideoRef} className="h-auto max-h-[520px] w-auto max-w-full object-contain" src={post.mediaUrl} autoPlay muted loop playsInline preload="auto" onLoadedData={(event) => { const video = event.currentTarget; video.muted = true; void video.play().catch(() => undefined); }} />
           ) : (
             <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-auto max-h-[520px] w-auto max-w-full object-contain" loading="lazy" decoding="async" />
           )}
@@ -352,6 +372,9 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     </article>
   );
 }
+
+
+
 
 
 
