@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
@@ -20,7 +20,7 @@ export function SearchForm() {
     if (rating) params.set("rating", rating);
     if (sort) params.set("sort", sort);
 
-    router.push(`/?${params.toString()}#workers`);
+    router.push(`/search?${params.toString()}`);
   }
 
   return (
@@ -92,6 +92,7 @@ export function SearchForm() {
     </form>
   );
 }
+
 
 
 
