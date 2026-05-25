@@ -1,12 +1,12 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { categories } from "../lib/categories";
-import { getWorkers } from "../lib/api";
+import { demoWorkers, getWorkers } from "../lib/api";
 import type { Worker } from "../types";
 import { WorkerCard } from "../components/WorkerCard";
 
 export function HomeScreen({ onOpenWorker }: { onOpenWorker: (worker: Worker) => void }) {
-  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>(demoWorkers);
   const [category, setCategory] = useState("");
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ export function HomeScreen({ onOpenWorker }: { onOpenWorker: (worker: Worker) =>
       const data = await getWorkers({ category: category || undefined, city: city || undefined, sort: "rating" });
       setWorkers(data);
     } catch {
-      setWorkers([]);
+      setWorkers(demoWorkers);
     } finally {
       setLoading(false);
     }
@@ -52,6 +52,7 @@ export function HomeScreen({ onOpenWorker }: { onOpenWorker: (worker: Worker) =>
       <Pressable onPress={load} style={styles.apply}><Text style={styles.applyText}>Apply category filter</Text></Pressable>
 
       <Text style={styles.sectionTitle}>Top workers</Text>
+      {!loading ? <Text style={styles.loadedText}>Loaded {workers.length} workers</Text> : null}
       {loading ? <ActivityIndicator color="#0f766e" /> : workers.map((worker) => <WorkerCard key={worker.id} worker={worker} onOpen={onOpenWorker} />)}
     </ScrollView>
   );
@@ -75,6 +76,8 @@ const styles = StyleSheet.create({
   chipText: { color: "#334155", fontWeight: "900" },
   activeChipText: { color: "#fff" },
   apply: { alignSelf: "flex-start", backgroundColor: "#ccfbf1", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, marginBottom: 16 },
-  applyText: { color: "#0f766e", fontWeight: "900" }
+  applyText: { color: "#0f766e", fontWeight: "900" },
+  loadedText: { color: "#64748b", fontWeight: "800", marginBottom: 10 }
 });
+
 

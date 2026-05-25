@@ -1,6 +1,5 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import * as ImagePicker from "expo-image-picker";
 import type { AppSession } from "../lib/supabase";
 import { categories } from "../lib/categories";
 import { createWorkPost, getMyWorkerProfile, saveWorkerProfile, uploadMedia } from "../lib/api";
@@ -47,29 +46,11 @@ export function DashboardScreen() {
   }
 
   async function chooseProfilePhoto() {
-    if (!session?.user.id) return;
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return Alert.alert("Permission needed", "Allow media access to upload photo.");
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.82, allowsEditing: true, aspect: [1, 1] });
-    if (result.canceled) return;
-    try {
-      setLoading(true);
-      const publicUrl = await uploadMedia(session.user.id, result.assets[0].uri, "profile", "image");
-      setWorker((current) => ({ ...current, profilePhoto: publicUrl }));
-    } catch (error: any) {
-      Alert.alert("Upload failed", error.message);
-    } finally {
-      setLoading(false);
-    }
+    Alert.alert("Coming soon", "Photo upload will be enabled after the app launch test is stable.");
   }
 
   async function chooseWorkMedia() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return Alert.alert("Permission needed", "Allow media access to upload work photo/video.");
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.All, quality: 0.9, videoMaxDuration: 90 });
-    if (result.canceled) return;
-    const asset = result.assets[0];
-    setWorkPreview({ uri: asset.uri, type: asset.type === "video" ? "video" : "image" });
+    Alert.alert("Coming soon", "Work photo/video upload will be enabled after the app launch test is stable.");
   }
 
   async function saveProfile() {
@@ -176,4 +157,5 @@ const styles = StyleSheet.create({
   logout: { alignItems: "center", paddingVertical: 14 },
   logoutText: { color: "#be123c", fontWeight: "900" }
 });
+
 

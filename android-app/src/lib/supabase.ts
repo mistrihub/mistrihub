@@ -1,4 +1,4 @@
-﻿import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
 export const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -42,7 +42,10 @@ export async function supabaseFetch(path: string, init: RequestInit = {}, useUse
     Authorization: `Bearer ${session?.access_token ?? supabaseAnonKey}`
   };
   if (!headers["Content-Type"] && init.body) headers["Content-Type"] = "application/json";
-  return fetch(`${supabaseUrl}${path}`, { ...init, headers });
+  return Promise.race([
+    fetch(`${supabaseUrl}${path}`, { ...init, headers }),
+    new Promise<Response>((_, reject) => setTimeout(() => reject(new Error("Request timeout")), 10000))
+  ]);
 }
 
 async function parseAuthResponse(response: Response) {
@@ -100,3 +103,4 @@ export const supabase = {
     }
   }
 };
+

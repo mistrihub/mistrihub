@@ -1,11 +1,7 @@
-import { useRef } from "react";
-import { Image, Pressable, Share, StyleSheet, Text, View } from "react-native";
-import { ResizeMode, Video } from "expo-av";
+﻿import { Image, Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import type { WorkPost } from "../types";
 
 export function WorkPostCard({ post }: { post: WorkPost }) {
-  const videoRef = useRef<Video | null>(null);
-
   async function sharePost() {
     await Share.share({ message: `${post.caption}\nShared from MistriHub` });
   }
@@ -21,25 +17,17 @@ export function WorkPostCard({ post }: { post: WorkPost }) {
       </View>
 
       {post.mediaType === "video" ? (
-        <Video
-          ref={videoRef}
-          source={{ uri: post.mediaUrl }}
-          style={styles.media}
-          resizeMode={ResizeMode.CONTAIN}
-          shouldPlay
-          isLooping
-          isMuted={false}
-          volume={1}
-          useNativeControls
-        />
+        <Pressable style={[styles.media, styles.videoBox]} onPress={() => Linking.openURL(post.mediaUrl)}>
+          <Text style={styles.videoText}>Tap to open video</Text>
+        </Pressable>
       ) : (
         <Image source={{ uri: post.mediaUrl }} style={styles.media} resizeMode="contain" />
       )}
 
       <Text style={styles.caption}>{post.caption}</Text>
       <View style={styles.actions}>
-        <Text style={styles.action}>♥ {post.likeCount}</Text>
-        <Text style={styles.action}>💬 {post.commentCount}</Text>
+        <Text style={styles.action}>Like {post.likeCount}</Text>
+        <Text style={styles.action}>Comment {post.commentCount}</Text>
         <Pressable onPress={sharePost}><Text style={styles.action}>Share</Text></Pressable>
       </View>
     </View>
@@ -52,7 +40,9 @@ const styles = StyleSheet.create({
   avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#e2e8f0" },
   name: { fontWeight: "900", color: "#14213d", fontSize: 15 },
   meta: { color: "#64748b", fontSize: 12, marginTop: 2 },
-  media: { width: "100%", height: 430, backgroundColor: "#000" },
+  media: { width: "100%", height: 360, backgroundColor: "#000" },
+  videoBox: { alignItems: "center", justifyContent: "center" },
+  videoText: { color: "#fff", fontWeight: "900", fontSize: 16 },
   caption: { paddingHorizontal: 12, paddingTop: 12, color: "#334155", lineHeight: 20 },
   actions: { padding: 12, flexDirection: "row", gap: 12 },
   action: { fontWeight: "900", color: "#0f766e" }
