@@ -1,29 +1,40 @@
 {
-  "name": "mistrihub-android",
-  "version": "1.0.0",
-  "private": true,
-  "main": "node_modules/expo/AppEntry.js",
-  "scripts": {
-    "start": "expo start",
-    "android": "expo run:android",
-    "typecheck": "tsc --noEmit",
-    "build:android": "eas build --platform android --profile production",
-    "build:preview": "eas build --platform android --profile preview"
-  },
-  "dependencies": {
-    "@react-native-async-storage/async-storage": "latest",
-    "@supabase/supabase-js": "latest",
-    "expo": "latest",
-    "expo-av": "latest",
-    "expo-image-picker": "latest",
-    "expo-linking": "latest",
-    "expo-status-bar": "latest",
-    "react": "latest",
-    "react-native": "latest",
-    "react-native-url-polyfill": "latest"
-  },
-  "devDependencies": {
-    "@types/react": "latest",
-    "typescript": "latest"
-  }
+    "name":  "mistrihub-android",
+    "version":  "1.0.0",
+    "private":  true,
+    "main":  "node_modules/expo/AppEntry.js",
+    "scripts":  {
+                    "start":  "expo start",
+                    "android":  "expo run:android",
+                    "typecheck":  "tsc --noEmit",
+                    "build:android":  "eas build --platform android --profile production",
+                    "build:preview":  "eas build --platform android --profile preview"
+                },
+    "dependencies":  {
+                         "@react-native-async-storage/async-storage":  "2.2.0",
+                         "@supabase/supabase-js":  "latest",
+                         "expo":  "latest",
+                         "expo-av":  "latest",
+                         "expo-image-picker":  "latest",
+                         "expo-linking":  "latest",
+                         "expo-status-bar":  "latest",
+                         "react":  "19.2.3",
+                         "react-native":  "latest",
+                         "react-native-url-polyfill":  "latest"
+                     },
+    "devDependencies":  {
+                            "@types/react":  "latest",
+                            "typescript":  "latest"
+                        },
+    "expo":  {
+                 "doctor":  {
+                                "reactNativeDirectoryCheck":  {
+                                                                  "exclude":  [
+                                                                                  "expo-av",
+                                                                                  "expo-modules-jsi"
+                                                                              ],
+                                                                  "listUnknownPackages":  false
+                                                              }
+                            }
+             }
 }

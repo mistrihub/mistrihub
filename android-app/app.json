@@ -10,11 +10,6 @@
     "icon": "./assets/icon.png",
     "scheme": "mistrihub",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
