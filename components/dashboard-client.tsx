@@ -1,10 +1,10 @@
-﻿/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { LogOut, Save, Trash2, UploadCloud, Video, X } from "lucide-react";
 import { categories } from "@/lib/categories";
@@ -136,6 +136,7 @@ export function DashboardClient() {
   const [saving, setSaving] = useState(false);
   const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
   const [cropSaving, setCropSaving] = useState(false);
+  const cropDragRef = useRef<{ pointerId: number; startX: number; startY: number; offsetX: number; offsetY: number } | null>(null);
 
   const publicProfileUrl = useMemo(() => {
     return profile.id ? `/workers/${profile.id}` : "";
@@ -251,6 +252,30 @@ export function DashboardClient() {
     setStatus("Adjust your profile photo, then upload it.");
   }
 
+
+  function startCropDrag(event: React.PointerEvent<HTMLDivElement>) {
+    if (!cropDraft) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    cropDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: cropDraft.offsetX,
+      offsetY: cropDraft.offsetY
+    };
+  }
+
+  function moveCropDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = cropDragRef.current;
+    if (!drag || !cropDraft || drag.pointerId !== event.pointerId) return;
+    const nextX = Math.max(-140, Math.min(140, drag.offsetX + event.clientX - drag.startX));
+    const nextY = Math.max(-140, Math.min(140, drag.offsetY + event.clientY - drag.startY));
+    setCropDraft({ ...cropDraft, offsetX: nextX, offsetY: nextY });
+  }
+
+  function endCropDrag(event: React.PointerEvent<HTMLDivElement>) {
+    if (cropDragRef.current?.pointerId === event.pointerId) cropDragRef.current = null;
+  }
   async function uploadAdjustedProfilePhoto() {
     if (!cropDraft) return;
 
@@ -649,7 +674,7 @@ export function DashboardClient() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black text-ink">Adjust profile photo</h2>
-                <p className="mt-1 text-sm text-slate-600">Face ko square ke andar set karo, phir upload karo.</p>
+                <p className="mt-1 text-sm text-slate-600">Photo ko drag karo ya slider se crop/cut adjust karo, phir upload karo.</p>
               </div>
               <button
                 type="button"
@@ -664,7 +689,7 @@ export function DashboardClient() {
               </button>
             </div>
 
-            <div className="mx-auto mt-5 aspect-square w-full max-w-[280px] overflow-hidden rounded-xl bg-slate-100 sm:max-w-[360px]">
+            <div className="mx-auto mt-5 aspect-square w-full max-w-[280px] touch-none cursor-move overflow-hidden rounded-xl bg-slate-100 sm:max-w-[360px]" onPointerDown={startCropDrag} onPointerMove={moveCropDrag} onPointerUp={endCropDrag} onPointerCancel={endCropDrag}>
               <Image
                 src={cropDraft.objectUrl}
                 alt="Profile photo preview"
@@ -768,6 +793,7 @@ function CropSlider({
     </label>
   );
 }
+
 
 
 

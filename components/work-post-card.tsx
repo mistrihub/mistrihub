@@ -1,4 +1,4 @@
-﻿/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -37,6 +37,7 @@ function getVisitorId() {
 export function WorkPostCard({ post }: WorkPostCardProps) {
   const [visitorId, setVisitorId] = useState("");
   const [liked, setLiked] = useState(false);
+  const [shared, setShared] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -160,8 +161,9 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     async function loadEngagement() {
       if (!hasSupabaseConfig || !supabase || isDemoPost) return;
 
-      const [{ data: ownLikes }, { data: dbComments }] = await Promise.all([
+      const [{ data: ownLikes }, { data: ownShares }, { data: dbComments }] = await Promise.all([
         supabase.from("work_post_likes").select("post_id").eq("post_id", post.id).eq("visitor_id", nextVisitorId).limit(1),
+        supabase.from("work_post_shares").select("post_id").eq("post_id", post.id).eq("visitor_id", nextVisitorId).limit(1),
         supabase
           .from("work_post_comments")
           .select("id, post_id, visitor_name, comment_text, created_at")
@@ -171,6 +173,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
       ]);
 
       if (ownLikes && ownLikes.length > 0) setLiked(true);
+      if (ownShares && ownShares.length > 0) setShared(true);
 
       if (dbComments) {
         setComments(
@@ -240,11 +243,22 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   }
 
   async function sharePost() {
-    setCounts((current) => ({ ...current, shares: current.shares + 1 }));
+    const shouldCountShare = !shared;
 
-    if (hasSupabaseConfig && supabase && visitorId && !isDemoPost) {
-      const { error } = await supabase.from("work_post_shares").insert({ post_id: post.id, visitor_id: visitorId });
-      if (error) setCounts((current) => ({ ...current, shares: Math.max(current.shares - 1, 0) }));
+    if (shouldCountShare) {
+      setShared(true);
+      setCounts((current) => ({ ...current, shares: current.shares + 1 }));
+    }
+
+    if (shouldCountShare && hasSupabaseConfig && supabase && visitorId && !isDemoPost) {
+      const { error } = await supabase.from("work_post_shares").upsert(
+        { post_id: post.id, visitor_id: visitorId },
+        { onConflict: "post_id,visitor_id", ignoreDuplicates: true }
+      );
+      if (error) {
+        setShared(false);
+        setCounts((current) => ({ ...current, shares: Math.max(current.shares - 1, 0) }));
+      }
     }
 
     const shareText = `${post.worker.name} work update on MistriHub: ${post.caption}`;
@@ -309,7 +323,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
             <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
             {counts.comments}
           </button>
-          <button type="button" onClick={() => void sharePost()} className="inline-flex items-center justify-center gap-1 rounded-lg bg-teal-50 px-2 py-2 text-brand transition hover:bg-teal-100">
+          <button type="button" onClick={() => void sharePost()} className={`inline-flex items-center justify-center gap-1 rounded-lg bg-teal-50 px-2 py-2 text-brand transition hover:bg-teal-100 ${shared ? "opacity-70" : ""}`}>
             <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
             {counts.shares}
           </button>
@@ -372,6 +386,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     </article>
   );
 }
+
 
 
 
