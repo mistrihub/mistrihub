@@ -1,21 +1,61 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { DashboardScreen } from "./src/screens/DashboardScreen";
 import { FeedScreen } from "./src/screens/FeedScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { WorkerProfileScreen } from "./src/screens/WorkerProfileScreen";
+import { getMyWorkerProfile } from "./src/lib/api";
+import { AppSession, supabase } from "./src/lib/supabase";
 import type { AppScreen, Worker } from "./src/types";
 
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>("home");
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+  const [session, setSession] = useState<AppSession | null>(null);
+  const [ownWorker, setOwnWorker] = useState<Worker | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      if (!nextSession) {
+        setOwnWorker(null);
+        if (screen === "dashboard" || screen === "profile") setScreen("home");
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [screen]);
+
+  useEffect(() => {
+    async function loadOwnProfile() {
+      if (!session?.user.id) return;
+      const profile = await getMyWorkerProfile(session.user.id);
+      setOwnWorker(profile);
+    }
+    void loadOwnProfile();
+  }, [session?.user.id, screen]);
 
   function openWorker(worker: Worker) {
     setSelectedWorker(worker);
     setScreen("profile");
   }
 
+  function openOwnProfile() {
+    if (ownWorker) {
+      setSelectedWorker(ownWorker);
+      setScreen("profile");
+      return;
+    }
+    setScreen("dashboard");
+  }
+
+  function openEditProfile() {
+    setScreen("dashboard");
+  }
+
+  const loggedIn = Boolean(session);
   const active = selectedWorker && screen === "profile";
+  const showingOwnProfile = Boolean(active && ownWorker && selectedWorker?.id === ownWorker.id);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -26,14 +66,23 @@ export default function App() {
       <View style={styles.body}>
         {screen === "home" ? <HomeScreen onOpenWorker={openWorker} /> : null}
         {screen === "feed" ? <FeedScreen onOpenWorker={openWorker} /> : null}
-        {screen === "dashboard" ? <DashboardScreen /> : null}
-        {active && selectedWorker ? <WorkerProfileScreen worker={selectedWorker} onBack={() => setScreen("home")} /> : null}
+        {screen === "dashboard" ? <DashboardScreen onProfileSaved={(worker) => setOwnWorker(worker)} /> : null}
+        {active && selectedWorker ? <WorkerProfileScreen worker={selectedWorker} onBack={() => setScreen("home")} onEdit={showingOwnProfile ? openEditProfile : undefined} /> : null}
       </View>
 
       <View style={styles.tabs}>
         <Tab label="Home" active={screen === "home"} onPress={() => setScreen("home")} />
-        <Tab label="Work" active={screen === "feed"} onPress={() => setScreen("feed")} />
-        <Tab label="Join" active={screen === "dashboard"} onPress={() => setScreen("dashboard")} />
+        {loggedIn ? (
+          <>
+            <Tab label="Upload" active={screen === "dashboard"} onPress={() => setScreen("dashboard")} />
+            <Tab label="Profile" active={showingOwnProfile} onPress={openOwnProfile} />
+          </>
+        ) : (
+          <>
+            <Tab label="Work" active={screen === "feed"} onPress={() => setScreen("feed")} />
+            <Tab label="Join" active={screen === "dashboard"} onPress={() => setScreen("dashboard")} />
+          </>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -58,5 +107,3 @@ const styles = StyleSheet.create({
   tabText: { color: "#cbd5e1", fontWeight: "900" },
   activeTabText: { color: "#fff" }
 });
-
-

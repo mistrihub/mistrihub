@@ -4,7 +4,7 @@ import { addReview, getReviews, getWorkerWorkPosts } from "../lib/api";
 import type { Review, WorkPost, Worker } from "../types";
 import { WorkPostCard } from "../components/WorkPostCard";
 
-export function WorkerProfileScreen({ worker, onBack }: { worker: Worker; onBack: () => void }) {
+export function WorkerProfileScreen({ worker, onBack, onEdit }: { worker: Worker; onBack: () => void; onEdit?: () => void }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [workPosts, setWorkPosts] = useState<WorkPost[]>([]);
   const [rating, setRating] = useState("5");
@@ -38,7 +38,10 @@ export function WorkerProfileScreen({ worker, onBack }: { worker: Worker; onBack
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Pressable onPress={onBack} style={styles.back}><Text style={styles.backText}>Back</Text></Pressable>
+      <View style={styles.topActions}>
+        <Pressable onPress={onBack} style={styles.back}><Text style={styles.backText}>Back</Text></Pressable>
+        {onEdit ? <Pressable onPress={onEdit} style={styles.editButton}><Text style={styles.editText}>Edit your profile</Text></Pressable> : null}
+      </View>
       <View style={styles.card}>
         <Image source={{ uri: worker.profilePhoto }} style={styles.photo} />
         <Text style={styles.name}>{worker.name}</Text>
@@ -88,8 +91,11 @@ export function WorkerProfileScreen({ worker, onBack }: { worker: Worker; onBack
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#f8fafc" },
   content: { padding: 16, paddingBottom: 110 },
-  back: { alignSelf: "flex-start", paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "#e0f2fe", borderRadius: 12, marginBottom: 12 },
+  topActions: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 },
+  back: { paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "#e0f2fe", borderRadius: 12 },
   backText: { color: "#0369a1", fontWeight: "900" },
+  editButton: { paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "#ccfbf1", borderRadius: 12 },
+  editText: { color: "#0f766e", fontWeight: "900" },
   card: { backgroundColor: "#fff", borderRadius: 22, padding: 16, marginBottom: 14, shadowColor: "#0f172a", shadowOpacity: 0.08, shadowRadius: 12, elevation: 2 },
   feedBlock: { marginBottom: 14 },
   photo: { width: "100%", height: 260, borderRadius: 18, backgroundColor: "#e2e8f0" },
@@ -110,4 +116,5 @@ const styles = StyleSheet.create({
   review: { borderTopWidth: 1, borderTopColor: "#e2e8f0", paddingTop: 10, marginTop: 10 },
   reviewName: { color: "#14213d", fontWeight: "900" }
 });
+
 

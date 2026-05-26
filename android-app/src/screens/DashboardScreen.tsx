@@ -19,7 +19,7 @@ function WorkVideoPreview({ uri }: { uri: string }) {
   return <VideoView player={player} style={styles.workPreview} contentFit="contain" nativeControls />;
 }
 
-export function DashboardScreen() {
+export function DashboardScreen({ onProfileSaved }: { onProfileSaved?: (worker: Worker) => void }) {
   const [session, setSession] = useState<AppSession | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -111,7 +111,10 @@ export function DashboardScreen() {
     setLoading(false);
     if (error) Alert.alert("Save failed", error.message);
     else {
-      if (data) setWorker(data);
+      if (data) {
+        setWorker(data);
+        onProfileSaved?.(data);
+      }
       Alert.alert("Profile saved", "Your MistriHub profile is live.");
     }
   }
@@ -214,3 +217,4 @@ const styles = StyleSheet.create({
   logout: { alignItems: "center", paddingVertical: 14 },
   logoutText: { color: "#be123c", fontWeight: "900" }
 });
+
