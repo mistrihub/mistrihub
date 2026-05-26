@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Image, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { DashboardScreen } from "./src/screens/DashboardScreen";
 import { FeedScreen } from "./src/screens/FeedScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
@@ -102,7 +103,7 @@ function Tab({ label, active, onPress }: { label: string; active: boolean; onPre
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff", paddingTop: StatusBar.currentHeight ?? 0 },
+  safe: { flex: 1, backgroundColor: "#fff" },
   header: { height: 68, backgroundColor: "#fff", justifyContent: "center", paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: "#e2e8f0" },
   headerLogo: { width: 190, height: 50, alignSelf: "flex-start" },
   body: { flex: 1 },
@@ -112,5 +113,6 @@ const styles = StyleSheet.create({
   tabText: { color: "#cbd5e1", fontWeight: "900" },
   activeTabText: { color: "#fff" }
 });
+
 
 
