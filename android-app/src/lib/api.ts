@@ -351,6 +351,14 @@ export async function addWorkPostShare(postId: string) {
   return response.ok || response.status === 409 ? { data: null, error: null } : errorResult(await response.text());
 }
 
+
+export async function deleteWorkPost(postId: string) {
+  const response = await supabaseFetch(`/rest/v1/work_posts?id=eq.${postId}`, {
+    method: "DELETE",
+    headers: { Prefer: "return=minimal" }
+  }, true);
+  return response.ok ? { data: null, error: null } : errorResult(await response.text());
+}
 export async function getWorkPostComments(postId: string): Promise<WorkPostComment[]> {
   try {
     const response = await supabaseFetch(`/rest/v1/work_post_comments?${makeQuery({ select: "id,post_id,visitor_name,comment_text,created_at", post_id: `eq.${postId}`, order: "created_at.desc", limit: "20" })}`);
@@ -367,6 +375,8 @@ export async function getWorkPostComments(postId: string): Promise<WorkPostComme
     return [];
   }
 }
+
+
 
 
 

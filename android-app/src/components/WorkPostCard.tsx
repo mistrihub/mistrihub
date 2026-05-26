@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import { Image, Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Image, Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
-import { addWorkPostComment, addWorkPostShare, getWorkPostComments, likeWorkPost } from "../lib/api";
+import { addWorkPostComment, addWorkPostShare, deleteWorkPost, getWorkPostComments, likeWorkPost } from "../lib/api";
 import type { WorkPost, WorkPostComment, Worker } from "../types";
+
+const likeIcon = require("../../assets/like.png");
+const commentIcon = require("../../assets/comment.png");
+const shareIcon = require("../../assets/share.png");
 
 function FeedVideo({ uri, active }: { uri: string; active: boolean }) {
   const player = useVideoPlayer(uri, (videoPlayer) => {
@@ -21,10 +25,12 @@ function FeedVideo({ uri, active }: { uri: string; active: boolean }) {
   return <VideoView player={player} style={styles.media} contentFit="contain" nativeControls={false} />;
 }
 
-export function WorkPostCard({ post, active = true, onOpenWorker }: { post: WorkPost; active?: boolean; onOpenWorker?: (worker: Worker) => void }) {
+export function WorkPostCard({ post, active = true, onOpenWorker, canDelete = false, onDeleted }: { post: WorkPost; active?: boolean; onOpenWorker?: (worker: Worker) => void; canDelete?: boolean; onDeleted?: (postId: string) => void }) {
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [commentCount, setCommentCount] = useState(post.commentCount);
+  const [shareCount, setShareCount] = useState(post.shareCount);
   const [liked, setLiked] = useState(false);
+  const [shared, setShared] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<WorkPostComment[]>([]);
@@ -32,8 +38,17 @@ export function WorkPostCard({ post, active = true, onOpenWorker }: { post: Work
   const [videoPaused, setVideoPaused] = useState(false);
 
   async function sharePost() {
-    await addWorkPostShare(post.id);
+    if (busy) return;
     await Share.share({ message: `${post.caption}\nShared from MistriHub` });
+    if (shared) return;
+    setBusy(true);
+    const { data, error } = await addWorkPostShare(post.id);
+    setBusy(false);
+    if (!error) {
+      setShared(true);
+      const shareResult = data as { alreadyShared?: boolean } | null;
+      if (!shareResult?.alreadyShared) setShareCount((count) => count + 1);
+    }
   }
 
   async function handleLike() {
@@ -67,6 +82,21 @@ export function WorkPostCard({ post, active = true, onOpenWorker }: { post: Work
     }
   }
 
+  function confirmDelete() {
+    Alert.alert("Delete post", "Delete this uploaded photo/video from your profile?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const { error } = await deleteWorkPost(post.id);
+          if (error) Alert.alert("Delete failed", error.message);
+          else onDeleted?.(post.id);
+        }
+      }
+    ]);
+  }
+
   const headerContent = (
     <View style={styles.headerInner}>
       {post.worker?.profilePhoto ? <Image source={{ uri: post.worker.profilePhoto }} style={styles.avatar} /> : <View style={styles.avatar} />}
@@ -85,28 +115,35 @@ export function WorkPostCard({ post, active = true, onOpenWorker }: { post: Work
         <View style={styles.header}>{headerContent}</View>
       )}
 
-      {post.mediaType === "video" ? (
-        <Pressable onPress={() => setVideoPaused((current) => !current)} style={styles.videoWrap}>
-          <FeedVideo uri={post.mediaUrl} active={active && !videoPaused} />
-          {videoPaused ? <View style={styles.pausedBadge}><Text style={styles.pausedText}>Paused</Text></View> : null}
-        </Pressable>
-      ) : (
-        <Image source={{ uri: post.mediaUrl }} style={styles.media} resizeMode="contain" />
-      )}
+      <View style={styles.mediaFrame}>
+        {canDelete ? (
+          <Pressable onPress={confirmDelete} style={styles.deleteButton}>
+            <Text style={styles.deleteText}>Delete</Text>
+          </Pressable>
+        ) : null}
+        {post.mediaType === "video" ? (
+          <Pressable onPress={() => setVideoPaused((current) => !current)} style={styles.videoWrap}>
+            <FeedVideo uri={post.mediaUrl} active={active && !videoPaused} />
+            {videoPaused ? <View style={styles.pausedBadge}><Text style={styles.pausedText}>Paused</Text></View> : null}
+          </Pressable>
+        ) : (
+          <Image source={{ uri: post.mediaUrl }} style={styles.media} resizeMode="contain" />
+        )}
+      </View>
 
       <Text style={styles.caption}>{post.caption}</Text>
       <View style={styles.actions}>
         <Pressable disabled={busy || liked} onPress={handleLike} style={[styles.actionButton, styles.likeButton]}>
-          <Text style={[styles.actionIcon, styles.likeIcon, liked && styles.actionDone]}>♥</Text>
-          <Text style={[styles.actionCount, styles.likeIcon, liked && styles.actionDone]}>{likeCount}</Text>
+          <Image source={likeIcon} style={[styles.actionImage, liked && styles.actionImageDone]} resizeMode="contain" />
+          <Text style={[styles.actionCount, styles.likeText, liked && styles.actionDone]}>{likeCount}</Text>
         </Pressable>
         <Pressable onPress={openComments} style={[styles.actionButton, styles.commentButtonSoft]}>
-          <Text style={[styles.actionIcon, styles.commentIcon]}>▣</Text>
-          <Text style={[styles.actionCount, styles.commentIcon]}>{commentCount}</Text>
+          <Image source={commentIcon} style={styles.actionImage} resizeMode="contain" />
+          <Text style={[styles.actionCount, styles.commentTextColor]}>{commentCount}</Text>
         </Pressable>
-        <Pressable onPress={sharePost} style={[styles.actionButton, styles.shareButtonSoft]}>
-          <Text style={[styles.actionIcon, styles.shareIcon]}>↗</Text>
-          <Text style={[styles.actionCount, styles.shareIcon]}>Share</Text>
+        <Pressable disabled={busy} onPress={sharePost} style={[styles.actionButton, styles.shareButtonSoft, shared && styles.sharedButton]}>
+          <Image source={shareIcon} style={styles.actionImage} resizeMode="contain" />
+          <Text style={[styles.actionCount, styles.shareTextColor]}>{shareCount}</Text>
         </Pressable>
       </View>
 
@@ -135,21 +172,26 @@ const styles = StyleSheet.create({
   avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#e2e8f0" },
   name: { fontWeight: "900", color: "#14213d", fontSize: 15 },
   meta: { color: "#64748b", fontSize: 12, marginTop: 2 },
+  mediaFrame: { position: "relative", backgroundColor: "#000" },
   videoWrap: { position: "relative", width: "100%", height: 390, backgroundColor: "#000" },
   media: { width: "100%", height: 390, backgroundColor: "#000" },
+  deleteButton: { position: "absolute", top: 10, right: 10, zIndex: 5, backgroundColor: "rgba(225,29,72,0.94)", borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8 },
+  deleteText: { color: "#fff", fontWeight: "900", fontSize: 12 },
   pausedBadge: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.18)" },
   pausedText: { color: "#fff", backgroundColor: "rgba(15,23,42,0.78)", paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999, fontWeight: "900" },
   caption: { paddingHorizontal: 12, paddingTop: 12, color: "#334155", lineHeight: 20 },
   actions: { padding: 12, flexDirection: "row", alignItems: "center", gap: 12 },
-  actionButton: { minWidth: 58, minHeight: 38, borderRadius: 999, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingHorizontal: 10 },
+  actionButton: { minWidth: 68, minHeight: 42, borderRadius: 999, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 11 },
   likeButton: { backgroundColor: "#fff1e8" },
   commentButtonSoft: { backgroundColor: "#e8f3ff" },
-  shareButtonSoft: { backgroundColor: "#e6fffb" },
-  actionIcon: { fontSize: 20, fontWeight: "900" },
-  actionCount: { fontSize: 12, fontWeight: "900" },
-  likeIcon: { color: "#f97316" },
-  commentIcon: { color: "#0b76d1" },
-  shareIcon: { color: "#0f766e" },
+  shareButtonSoft: { backgroundColor: "#fef3c7" },
+  actionImage: { width: 23, height: 23 },
+  actionImageDone: { opacity: 0.45 },
+  actionCount: { fontSize: 13, fontWeight: "900" },
+  likeText: { color: "#f97316" },
+  commentTextColor: { color: "#0b76d1" },
+  shareTextColor: { color: "#d97706" },
+  sharedButton: { opacity: 0.7 },
   actionDone: { color: "#64748b" },
   commentBox: { paddingHorizontal: 12, paddingBottom: 12 },
   commentInputRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
@@ -160,3 +202,6 @@ const styles = StyleSheet.create({
   commentName: { color: "#14213d", fontWeight: "900", fontSize: 12 },
   commentText: { color: "#334155", marginTop: 2 }
 });
+
+
+

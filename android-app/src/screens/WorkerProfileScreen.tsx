@@ -109,7 +109,7 @@ export function WorkerProfileScreen({ worker, onBack, onEdit, onUpload }: { work
       contentContainerStyle={styles.content}
       data={workPosts}
       keyExtractor={(post) => post.id}
-      renderItem={({ item }) => <WorkPostCard post={item} active={activePostId === item.id} />}
+      renderItem={({ item }) => <WorkPostCard post={item} active={activePostId === item.id} canDelete={Boolean(onEdit || onUpload)} onDeleted={(postId) => setWorkPosts((current) => current.filter((post) => post.id !== postId))} />}
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}
       ListHeaderComponent={header}
@@ -149,3 +149,4 @@ const styles = StyleSheet.create({
   review: { borderTopWidth: 1, borderTopColor: "#e2e8f0", paddingTop: 10, marginTop: 10 },
   reviewName: { color: "#14213d", fontWeight: "900" }
 });
+
