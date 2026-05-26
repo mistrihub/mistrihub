@@ -19,7 +19,7 @@ function WorkVideoPreview({ uri }: { uri: string }) {
   return <VideoView player={player} style={styles.workPreview} contentFit="contain" nativeControls />;
 }
 
-export function DashboardScreen({ onProfileSaved }: { onProfileSaved?: (worker: Worker) => void }) {
+export function DashboardScreen({ mode = "profile", onProfileSaved }: { mode?: "profile" | "upload"; onProfileSaved?: (worker: Worker) => void }) {
   const [session, setSession] = useState<AppSession | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -120,7 +120,7 @@ export function DashboardScreen({ onProfileSaved }: { onProfileSaved?: (worker: 
   }
 
   async function publishWorkPost() {
-    if (!session?.user.id || !worker.id || !workPreview) return Alert.alert("Profile needed", "Save your worker profile and choose work media first.");
+    if (!session?.user.id || !worker.id || !workPreview) return Alert.alert("Profile needed", "Save your worker profile first, then choose work media.");
     try {
       setLoading(true);
       const mediaUrl = await uploadMedia(session.user.id, workPreview.uri, "work", workPreview.type);
@@ -153,40 +153,44 @@ export function DashboardScreen({ onProfileSaved }: { onProfileSaved?: (worker: 
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Worker dashboard</Text>
-      <Text style={styles.subtitle}>Edit profile and upload real work updates.</Text>
+      <Text style={styles.title}>{mode === "upload" ? "Upload feed" : "Edit your profile"}</Text>
+      <Text style={styles.subtitle}>{mode === "upload" ? "Add real work photos/videos to your public profile." : "Update your worker details and contact info."}</Text>
 
-      <View style={styles.card}>
-        {worker.profilePhoto ? <Image source={{ uri: worker.profilePhoto }} style={styles.profilePhoto} /> : null}
-        <Pressable disabled={loading} onPress={chooseProfilePhoto} style={styles.secondary}><Text style={styles.secondaryText}>Upload profile photo</Text></Pressable>
-        <TextInput value={worker.name ?? ""} onChangeText={(name) => setWorker((current) => ({ ...current, name }))} placeholder="Full name" style={styles.input} />
-        <TextInput value={worker.city ?? ""} onChangeText={(city) => setWorker((current) => ({ ...current, city }))} placeholder="City" style={styles.input} />
-        <TextInput value={worker.location ?? ""} onChangeText={(location) => setWorker((current) => ({ ...current, location }))} placeholder="Area / location" style={styles.input} />
-        <TextInput value={worker.phone ?? ""} onChangeText={(phone) => setWorker((current) => ({ ...current, phone, whatsapp: phone }))} placeholder="WhatsApp number" keyboardType="phone-pad" style={styles.input} />
-        <TextInput value={String(worker.experienceYears ?? "")} onChangeText={(value) => setWorker((current) => ({ ...current, experienceYears: Number(value) || 0 }))} placeholder="Experience years" keyboardType="number-pad" style={styles.input} />
-        <TextInput value={String(worker.startingPrice ?? "")} onChangeText={(value) => setWorker((current) => ({ ...current, startingPrice: Number(value) || 0 }))} placeholder="Starting price" keyboardType="number-pad" style={styles.input} />
-        <TextInput value={worker.shortDescription ?? ""} onChangeText={(shortDescription) => setWorker((current) => ({ ...current, shortDescription }))} placeholder="Short description" style={[styles.input, styles.textarea]} multiline />
+      {mode === "profile" ? (
+        <View style={styles.card}>
+          {worker.profilePhoto ? <Image source={{ uri: worker.profilePhoto }} style={styles.profilePhoto} /> : null}
+          <Pressable disabled={loading} onPress={chooseProfilePhoto} style={styles.secondary}><Text style={styles.secondaryText}>Upload profile photo</Text></Pressable>
+          <TextInput value={worker.name ?? ""} onChangeText={(name) => setWorker((current) => ({ ...current, name }))} placeholder="Full name" style={styles.input} />
+          <TextInput value={worker.city ?? ""} onChangeText={(city) => setWorker((current) => ({ ...current, city }))} placeholder="City" style={styles.input} />
+          <TextInput value={worker.location ?? ""} onChangeText={(location) => setWorker((current) => ({ ...current, location }))} placeholder="Area / location" style={styles.input} />
+          <TextInput value={worker.phone ?? ""} onChangeText={(phone) => setWorker((current) => ({ ...current, phone, whatsapp: phone }))} placeholder="WhatsApp number" keyboardType="phone-pad" style={styles.input} />
+          <TextInput value={String(worker.experienceYears ?? "")} onChangeText={(value) => setWorker((current) => ({ ...current, experienceYears: Number(value) || 0 }))} placeholder="Experience years" keyboardType="number-pad" style={styles.input} />
+          <TextInput value={String(worker.startingPrice ?? "")} onChangeText={(value) => setWorker((current) => ({ ...current, startingPrice: Number(value) || 0 }))} placeholder="Starting price" keyboardType="number-pad" style={styles.input} />
+          <TextInput value={worker.shortDescription ?? ""} onChangeText={(shortDescription) => setWorker((current) => ({ ...current, shortDescription }))} placeholder="Short description" style={[styles.input, styles.textarea]} multiline />
 
-        <Text style={styles.label}>Category</Text>
-        <View style={styles.wrap}>
-          {categories.map((item) => (
-            <Pressable key={item.id} onPress={() => setWorker((current) => ({ ...current, categorySlug: item.slug as CategorySlug, category: item.name }))} style={[styles.chip, worker.categorySlug === item.slug && styles.activeChip]}>
-              <Text style={[styles.chipText, worker.categorySlug === item.slug && styles.activeChipText]}>{item.name}</Text>
-            </Pressable>
-          ))}
+          <Text style={styles.label}>Category</Text>
+          <View style={styles.wrap}>
+            {categories.map((item) => (
+              <Pressable key={item.id} onPress={() => setWorker((current) => ({ ...current, categorySlug: item.slug as CategorySlug, category: item.name }))} style={[styles.chip, worker.categorySlug === item.slug && styles.activeChip]}>
+                <Text style={[styles.chipText, worker.categorySlug === item.slug && styles.activeChipText]}>{item.name}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Pressable disabled={loading} onPress={saveProfile} style={styles.primary}><Text style={styles.primaryText}>{loading ? "Saving..." : "Save profile"}</Text></Pressable>
         </View>
-        <Pressable disabled={loading} onPress={saveProfile} style={styles.primary}><Text style={styles.primaryText}>{loading ? "Saving..." : "Save profile"}</Text></Pressable>
-      </View>
+      ) : null}
 
-      <View style={styles.card}>
-        <Text style={styles.heading}>Upload work photo/video</Text>
-        {workPreview?.type === "image" ? <Image source={{ uri: workPreview.uri }} style={styles.workPreview} resizeMode="contain" /> : null}
-        {workPreview?.type === "video" ? <WorkVideoPreview uri={workPreview.uri} /> : null}
-        {workPreview ? <Text style={styles.subtitle}>Selected {workPreview.type}: ready to publish</Text> : null}
-        <TextInput value={workCaption} onChangeText={setWorkCaption} placeholder="Caption" style={styles.input} />
-        <Pressable disabled={loading} onPress={chooseWorkMedia} style={styles.secondary}><Text style={styles.secondaryText}>Choose photo/video</Text></Pressable>
-        <Pressable disabled={loading} onPress={publishWorkPost} style={styles.primary}><Text style={styles.primaryText}>{loading ? "Please wait..." : "Publish work update"}</Text></Pressable>
-      </View>
+      {mode === "upload" ? (
+        <View style={styles.card}>
+          <Text style={styles.heading}>Upload work photo/video</Text>
+          {workPreview?.type === "image" ? <Image source={{ uri: workPreview.uri }} style={styles.workPreview} resizeMode="contain" /> : null}
+          {workPreview?.type === "video" ? <WorkVideoPreview uri={workPreview.uri} /> : null}
+          {workPreview ? <Text style={styles.subtitle}>Selected {workPreview.type}: ready to publish</Text> : null}
+          <TextInput value={workCaption} onChangeText={setWorkCaption} placeholder="Caption" style={styles.input} />
+          <Pressable disabled={loading} onPress={chooseWorkMedia} style={styles.secondary}><Text style={styles.secondaryText}>Choose photo/video</Text></Pressable>
+          <Pressable disabled={loading} onPress={publishWorkPost} style={styles.primary}><Text style={styles.primaryText}>{loading ? "Please wait..." : "Publish work update"}</Text></Pressable>
+        </View>
+      ) : null}
 
       <Pressable onPress={() => supabase.auth.signOut()} style={styles.logout}><Text style={styles.logoutText}>Logout</Text></Pressable>
     </ScrollView>
@@ -217,4 +221,3 @@ const styles = StyleSheet.create({
   logout: { alignItems: "center", paddingVertical: 14 },
   logoutText: { color: "#be123c", fontWeight: "900" }
 });
-

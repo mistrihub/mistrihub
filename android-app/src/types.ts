@@ -60,7 +60,7 @@ export type WorkPost = {
   worker?: Worker;
 };
 
-export type AppScreen = "home" | "feed" | "profile" | "dashboard";
+export type AppScreen = "home" | "feed" | "profile" | "dashboard" | "upload";
 
 export type WorkPostComment = {
   id: string;
@@ -69,4 +69,5 @@ export type WorkPostComment = {
   commentText: string;
   createdAt: string;
 };
+
 
