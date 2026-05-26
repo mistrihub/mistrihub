@@ -53,6 +53,10 @@ export default function App() {
     setScreen("dashboard");
   }
 
+  function openUploadFeed() {
+    setScreen("upload");
+  }
+
   const loggedIn = Boolean(session);
   const active = selectedWorker && screen === "profile";
   const showingOwnProfile = Boolean(active && ownWorker && selectedWorker?.id === ownWorker.id);
@@ -68,14 +72,14 @@ export default function App() {
         {screen === "feed" ? <FeedScreen onOpenWorker={openWorker} /> : null}
         {screen === "dashboard" ? <DashboardScreen mode="profile" onProfileSaved={(worker) => setOwnWorker(worker)} /> : null}
         {screen === "upload" ? <DashboardScreen mode="upload" onProfileSaved={(worker) => setOwnWorker(worker)} /> : null}
-        {active && selectedWorker ? <WorkerProfileScreen worker={selectedWorker} onBack={() => setScreen("home")} onEdit={showingOwnProfile ? openEditProfile : undefined} /> : null}
+        {active && selectedWorker ? <WorkerProfileScreen worker={selectedWorker} onBack={() => setScreen("home")} onEdit={showingOwnProfile ? openEditProfile : undefined} onUpload={showingOwnProfile ? openUploadFeed : undefined} /> : null}
       </View>
 
       <View style={styles.tabs}>
         <Tab label="Home" active={screen === "home"} onPress={() => setScreen("home")} />
         {loggedIn ? (
           <>
-            <Tab label="Work" active={screen === "upload"} onPress={() => setScreen("upload")} />
+            <Tab label="Work" active={screen === "feed"} onPress={() => setScreen("feed")} />
             <Tab label="Profile" active={showingOwnProfile} onPress={openOwnProfile} />
           </>
         ) : (
@@ -108,4 +112,5 @@ const styles = StyleSheet.create({
   tabText: { color: "#cbd5e1", fontWeight: "900" },
   activeTabText: { color: "#fff" }
 });
+
 
