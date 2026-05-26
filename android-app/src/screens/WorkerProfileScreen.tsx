@@ -1,18 +1,28 @@
-import { useEffect, useState } from "react";
-import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, FlatList, Image, Linking, Pressable, StyleSheet, Text, TextInput, View, ViewToken } from "react-native";
 import { addReview, getReviews, getWorkerWorkPosts } from "../lib/api";
 import type { Review, WorkPost, Worker } from "../types";
 import { WorkPostCard } from "../components/WorkPostCard";
 
-export function WorkerProfileScreen({ worker, onBack, onEdit }: { worker: Worker; onBack: () => void; onEdit?: () => void }) {
+export function WorkerProfileScreen({ worker, onBack, onEdit, onUpload }: { worker: Worker; onBack: () => void; onEdit?: () => void; onUpload?: () => void }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [workPosts, setWorkPosts] = useState<WorkPost[]>([]);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
   const [rating, setRating] = useState("5");
   const [reviewText, setReviewText] = useState("");
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 65 }).current;
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken<WorkPost>[] }) => {
+    const firstVisible = viewableItems.find((item) => item.isViewable && item.item.mediaType === "video");
+    setActivePostId(firstVisible?.item.id ?? null);
+  }).current;
 
   useEffect(() => {
     getReviews(worker.id).then(setReviews);
-    getWorkerWorkPosts(worker.id, 40).then((posts) => setWorkPosts(posts.map((post) => ({ ...post, worker }))));
+    getWorkerWorkPosts(worker.id, 40).then((posts) => {
+      const nextPosts = posts.map((post) => ({ ...post, worker }));
+      setWorkPosts(nextPosts);
+      setActivePostId(null);
+    });
   }, [worker]);
 
   function callWorker() {
@@ -36,11 +46,16 @@ export function WorkerProfileScreen({ worker, onBack, onEdit }: { worker: Worker
     getReviews(worker.id).then(setReviews);
   }
 
-  return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+  const header = (
+    <>
       <View style={styles.topActions}>
         <Pressable onPress={onBack} style={styles.back}><Text style={styles.backText}>Back</Text></Pressable>
-        {onEdit ? <Pressable onPress={onEdit} style={styles.editButton}><Text style={styles.editText}>Edit your profile</Text></Pressable> : null}
+        {onEdit || onUpload ? (
+          <View style={styles.ownerActions}>
+            {onEdit ? <Pressable onPress={onEdit} style={styles.editButton}><Text style={styles.editText}>Edit profile</Text></Pressable> : null}
+            {onUpload ? <Pressable onPress={onUpload} style={styles.uploadButton}><Text style={styles.uploadText}>Upload feed</Text></Pressable> : null}
+          </View>
+        ) : null}
       </View>
       <View style={styles.card}>
         <Image source={{ uri: worker.profilePhoto }} style={styles.photo} />
@@ -63,11 +78,12 @@ export function WorkerProfileScreen({ worker, onBack, onEdit }: { worker: Worker
         {worker.serviceDetails.map((item) => <Text key={item} style={styles.bullet}>• {item}</Text>)}
       </View>
 
-      <View style={styles.feedBlock}>
-        <Text style={styles.heading}>Work photos & videos</Text>
-        {workPosts.length === 0 ? <Text style={styles.desc}>No work updates uploaded yet.</Text> : workPosts.map((post) => <WorkPostCard key={post.id} post={post} active />)}
-      </View>
+      <Text style={styles.heading}>Work photos & videos</Text>
+    </>
+  );
 
+  const footer = (
+    <>
       <View style={styles.card}>
         <Text style={styles.heading}>Add review</Text>
         <TextInput value={rating} onChangeText={setRating} keyboardType="number-pad" placeholder="Rating 1-5" style={styles.input} />
@@ -84,7 +100,22 @@ export function WorkerProfileScreen({ worker, onBack, onEdit }: { worker: Worker
           </View>
         ))}
       </View>
-    </ScrollView>
+    </>
+  );
+
+  return (
+    <FlatList
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      data={workPosts}
+      keyExtractor={(post) => post.id}
+      renderItem={({ item }) => <WorkPostCard post={item} active={activePostId === item.id} />}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig}
+      ListHeaderComponent={header}
+      ListEmptyComponent={<Text style={styles.desc}>No work updates uploaded yet.</Text>}
+      ListFooterComponent={footer}
+    />
   );
 }
 
@@ -92,18 +123,20 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#f8fafc" },
   content: { padding: 16, paddingBottom: 110 },
   topActions: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 },
+  ownerActions: { flexDirection: "row", gap: 8, flexShrink: 1 },
   back: { paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "#e0f2fe", borderRadius: 12 },
   backText: { color: "#0369a1", fontWeight: "900" },
-  editButton: { paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "#ccfbf1", borderRadius: 12 },
+  editButton: { paddingHorizontal: 12, paddingVertical: 9, backgroundColor: "#ccfbf1", borderRadius: 12 },
   editText: { color: "#0f766e", fontWeight: "900" },
+  uploadButton: { paddingHorizontal: 12, paddingVertical: 9, backgroundColor: "#ffedd5", borderRadius: 12 },
+  uploadText: { color: "#ea580c", fontWeight: "900" },
   card: { backgroundColor: "#fff", borderRadius: 22, padding: 16, marginBottom: 14, shadowColor: "#0f172a", shadowOpacity: 0.08, shadowRadius: 12, elevation: 2 },
-  feedBlock: { marginBottom: 14 },
   photo: { width: "100%", height: 260, borderRadius: 18, backgroundColor: "#e2e8f0" },
   name: { fontSize: 26, fontWeight: "900", color: "#14213d", marginTop: 14 },
   meta: { color: "#0f766e", fontWeight: "900", marginTop: 4 },
   stats: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" },
   stat: { backgroundColor: "#f1f5f9", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, fontWeight: "900", color: "#334155" },
-  desc: { color: "#64748b", lineHeight: 22, marginTop: 8 },
+  desc: { color: "#64748b", lineHeight: 22, marginTop: 8, marginBottom: 14 },
   actions: { flexDirection: "row", gap: 10, marginTop: 16 },
   primary: { backgroundColor: "#0f766e", borderRadius: 14, paddingVertical: 13, paddingHorizontal: 16, alignItems: "center", flex: 1 },
   primaryText: { color: "#fff", fontWeight: "900" },
@@ -116,5 +149,3 @@ const styles = StyleSheet.create({
   review: { borderTopWidth: 1, borderTopColor: "#e2e8f0", paddingTop: 10, marginTop: 10 },
   reviewName: { color: "#14213d", fontWeight: "900" }
 });
-
-
