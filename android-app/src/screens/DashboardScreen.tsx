@@ -1,10 +1,23 @@
 import { useEffect, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { VideoView, useVideoPlayer } from "expo-video";
 import type { AppSession } from "../lib/supabase";
 import { categories } from "../lib/categories";
 import { createWorkPost, getMyWorkerProfile, saveWorkerProfile, uploadMedia } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import type { CategorySlug, Worker } from "../types";
+
+function WorkVideoPreview({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, (videoPlayer) => {
+    videoPlayer.loop = true;
+    videoPlayer.muted = true;
+    videoPlayer.volume = 0;
+    videoPlayer.play();
+  });
+
+  return <VideoView player={player} style={styles.workPreview} contentFit="contain" nativeControls />;
+}
 
 export function DashboardScreen() {
   const [session, setSession] = useState<AppSession | null>(null);
@@ -45,21 +58,62 @@ export function DashboardScreen() {
     else Alert.alert("Account created", "Now login and create your worker profile.");
   }
 
+  async function requestLibraryPermission() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission needed", "Please allow photo/video access to upload media.");
+      return false;
+    }
+    return true;
+  }
+
   async function chooseProfilePhoto() {
-    Alert.alert("Coming soon", "Photo upload will be enabled after the app launch test is stable.");
+    if (!session?.user.id) return;
+    const allowed = await requestLibraryPermission();
+    if (!allowed) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85
+    });
+    if (result.canceled || !result.assets[0]?.uri) return;
+    try {
+      setLoading(true);
+      const url = await uploadMedia(session.user.id, result.assets[0].uri, "profile", "image");
+      setWorker((current) => ({ ...current, profilePhoto: url }));
+      Alert.alert("Photo uploaded", "Now press Save profile to update your public profile.");
+    } catch (error: any) {
+      Alert.alert("Upload failed", error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function chooseWorkMedia() {
-    Alert.alert("Coming soon", "Work photo/video upload will be enabled after the app launch test is stable.");
+    const allowed = await requestLibraryPermission();
+    if (!allowed) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: false,
+      quality: 0.9,
+      videoMaxDuration: 90
+    });
+    if (result.canceled || !result.assets[0]?.uri) return;
+    const asset = result.assets[0];
+    setWorkPreview({ uri: asset.uri, type: asset.type === "video" ? "video" : "image" });
   }
 
   async function saveProfile() {
     if (!session?.user.id) return;
     setLoading(true);
-    const { error } = await saveWorkerProfile(session.user.id, worker);
+    const { data, error } = await saveWorkerProfile(session.user.id, worker);
     setLoading(false);
     if (error) Alert.alert("Save failed", error.message);
-    else Alert.alert("Profile saved", "Your MistriHub profile is live.");
+    else {
+      if (data) setWorker(data);
+      Alert.alert("Profile saved", "Your MistriHub profile is live.");
+    }
   }
 
   async function publishWorkPost() {
@@ -101,7 +155,7 @@ export function DashboardScreen() {
 
       <View style={styles.card}>
         {worker.profilePhoto ? <Image source={{ uri: worker.profilePhoto }} style={styles.profilePhoto} /> : null}
-        <Pressable onPress={chooseProfilePhoto} style={styles.secondary}><Text style={styles.secondaryText}>Upload profile photo</Text></Pressable>
+        <Pressable disabled={loading} onPress={chooseProfilePhoto} style={styles.secondary}><Text style={styles.secondaryText}>Upload profile photo</Text></Pressable>
         <TextInput value={worker.name ?? ""} onChangeText={(name) => setWorker((current) => ({ ...current, name }))} placeholder="Full name" style={styles.input} />
         <TextInput value={worker.city ?? ""} onChangeText={(city) => setWorker((current) => ({ ...current, city }))} placeholder="City" style={styles.input} />
         <TextInput value={worker.location ?? ""} onChangeText={(location) => setWorker((current) => ({ ...current, location }))} placeholder="Area / location" style={styles.input} />
@@ -118,15 +172,17 @@ export function DashboardScreen() {
             </Pressable>
           ))}
         </View>
-        <Pressable disabled={loading} onPress={saveProfile} style={styles.primary}><Text style={styles.primaryText}>Save profile</Text></Pressable>
+        <Pressable disabled={loading} onPress={saveProfile} style={styles.primary}><Text style={styles.primaryText}>{loading ? "Saving..." : "Save profile"}</Text></Pressable>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.heading}>Upload work photo/video</Text>
+        {workPreview?.type === "image" ? <Image source={{ uri: workPreview.uri }} style={styles.workPreview} resizeMode="contain" /> : null}
+        {workPreview?.type === "video" ? <WorkVideoPreview uri={workPreview.uri} /> : null}
         {workPreview ? <Text style={styles.subtitle}>Selected {workPreview.type}: ready to publish</Text> : null}
         <TextInput value={workCaption} onChangeText={setWorkCaption} placeholder="Caption" style={styles.input} />
-        <Pressable onPress={chooseWorkMedia} style={styles.secondary}><Text style={styles.secondaryText}>Choose photo/video</Text></Pressable>
-        <Pressable disabled={loading} onPress={publishWorkPost} style={styles.primary}><Text style={styles.primaryText}>Publish work update</Text></Pressable>
+        <Pressable disabled={loading} onPress={chooseWorkMedia} style={styles.secondary}><Text style={styles.secondaryText}>Choose photo/video</Text></Pressable>
+        <Pressable disabled={loading} onPress={publishWorkPost} style={styles.primary}><Text style={styles.primaryText}>{loading ? "Please wait..." : "Publish work update"}</Text></Pressable>
       </View>
 
       <Pressable onPress={() => supabase.auth.signOut()} style={styles.logout}><Text style={styles.logoutText}>Logout</Text></Pressable>
@@ -148,7 +204,8 @@ const styles = StyleSheet.create({
   primaryText: { color: "#fff", fontWeight: "900" },
   secondary: { backgroundColor: "#e0f2fe", borderRadius: 14, paddingVertical: 13, alignItems: "center", marginBottom: 10 },
   secondaryText: { color: "#0369a1", fontWeight: "900" },
-  profilePhoto: { width: 120, height: 120, borderRadius: 60, alignSelf: "center", marginBottom: 12 },
+  profilePhoto: { width: 120, height: 120, borderRadius: 60, alignSelf: "center", marginBottom: 12, backgroundColor: "#e2e8f0" },
+  workPreview: { width: "100%", height: 320, backgroundColor: "#000", borderRadius: 16, marginBottom: 12 },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
   chip: { backgroundColor: "#f1f5f9", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999 },
   activeChip: { backgroundColor: "#0f766e" },
@@ -157,5 +214,3 @@ const styles = StyleSheet.create({
   logout: { alignItems: "center", paddingVertical: 14 },
   logoutText: { color: "#be123c", fontWeight: "900" }
 });
-
-

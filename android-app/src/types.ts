@@ -61,3 +61,11 @@ export type WorkPost = {
 };
 
 export type AppScreen = "home" | "feed" | "profile" | "dashboard";
+
+export type WorkPostComment = {
+  id: string;
+  postId: string;
+  visitorName: string;
+  commentText: string;
+  createdAt: string;
+};

@@ -1,9 +1,11 @@
-﻿import { categories } from "./categories";
-import { getStoredSession, supabaseFetch, supabaseUrl } from "./supabase";
-import type { CategorySlug, Review, WorkPost, Worker } from "../types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { categories } from "./categories";
+import { getStoredSession, supabaseAnonKey, supabaseFetch, supabaseUrl } from "./supabase";
+import type { CategorySlug, Review, WorkPost, WorkPostComment, Worker } from "../types";
 
 const workerSelect = "id,user_id,name,category,category_slug,experience_years,rating,review_count,location,city,phone,whatsapp,profile_photo,short_description,bio,service_details,available_today,starting_price,created_at";
 const fallbackImage = "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=800&auto=format&fit=crop";
+const visitorKey = "mistrihub_visitor_id";
 
 export const demoWorkers: Worker[] = [
   {
@@ -146,20 +148,42 @@ function safeWorkers(workers: Worker[]) {
     serviceDetails: Array.isArray(worker.serviceDetails) ? worker.serviceDetails : []
   }));
 }
+
+function normalize(value?: string | null) {
+  return (value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function workerMatchesCategory(worker: Worker, categorySlug?: string) {
+  if (!categorySlug) return true;
+  if (worker.categorySlug === categorySlug) return true;
+  const category = categories.find((item) => item.slug === categorySlug);
+  const workerText = normalize(`${worker.category} ${worker.categorySlug}`);
+  const categoryWords = normalize(`${category?.name ?? ""} ${categorySlug}`).split(" ").filter(Boolean);
+  return categoryWords.some((word) => word.length > 2 && workerText.includes(word));
+}
+
+async function getVisitorId() {
+  const existing = await AsyncStorage.getItem(visitorKey);
+  if (existing) return existing;
+  const id = `app-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  await AsyncStorage.setItem(visitorKey, id);
+  return id;
+}
+
 export async function getWorkers(filters: { category?: string; city?: string; rating?: number; sort?: "rating" | "experience" } = {}) {
   try {
     const params: Record<string, string> = { select: workerSelect };
-    if (filters.category) params.category_slug = `eq.${filters.category}`;
     if (filters.city) params.or = `(city.ilike.*${filters.city}*,location.ilike.*${filters.city}*)`;
     if (filters.rating) params.rating = `gte.${filters.rating}`;
     params.order = filters.sort === "experience" ? "experience_years.desc,rating.desc" : "rating.desc,review_count.desc";
 
     const response = await supabaseFetch(`/rest/v1/workers?${makeQuery(params)}`);
-    if (!response.ok) return demoWorkers;
+    if (!response.ok) return demoWorkers.filter((worker) => workerMatchesCategory(worker, filters.category));
     const data = await readJson<WorkerRow[]>(response);
-    return data.length ? safeWorkers(data.map(mapWorker)) : demoWorkers;
+    const workers = safeWorkers(data.map(mapWorker)).filter((worker) => workerMatchesCategory(worker, filters.category));
+    return workers.length ? workers : [];
   } catch {
-    return demoWorkers;
+    return demoWorkers.filter((worker) => workerMatchesCategory(worker, filters.category));
   }
 }
 
@@ -249,7 +273,7 @@ export async function saveWorkerProfile(userId: string, input: Partial<Worker>) 
   }, true);
   if (!response.ok) return errorResult(await response.text());
   const data = await readJson<WorkerRow[]>(response);
-  return { data: data[0], error: null };
+  return { data: data[0] ? mapWorker(data[0]) : null, error: null };
 }
 
 export async function uploadMedia(userId: string, uri: string, folder: "profile" | "work", mediaType: "image" | "video") {
@@ -262,7 +286,7 @@ export async function uploadMedia(userId: string, uri: string, folder: "profile"
   const contentType = mediaType === "video" ? "video/mp4" : "image/jpeg";
   const upload = await fetch(`${supabaseUrl}/storage/v1/object/worker-images/${path}`, {
     method: "POST",
-    headers: { apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "", Authorization: `Bearer ${session.access_token}`, "Content-Type": contentType, "x-upsert": "true" },
+    headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${session.access_token}`, "Content-Type": contentType, "x-upsert": "true" },
     body: blob as any
   });
   if (!upload.ok) throw new Error(await upload.text());
@@ -270,12 +294,59 @@ export async function uploadMedia(userId: string, uri: string, folder: "profile"
 }
 
 export async function createWorkPost(workerId: string, mediaUrl: string, mediaType: "image" | "video", caption: string) {
+  const session = await getStoredSession();
+  if (!session) return errorResult("Please login first.");
   const response = await supabaseFetch("/rest/v1/work_posts", {
     method: "POST",
     headers: { Prefer: "return=minimal" },
-    body: JSON.stringify({ worker_id: workerId, media_url: mediaUrl, media_type: mediaType, caption, like_count: 0, comment_count: 0, share_count: 0 })
+    body: JSON.stringify({ worker_id: workerId, user_id: session.user.id, media_url: mediaUrl, media_type: mediaType, caption, like_count: 0, comment_count: 0, share_count: 0 })
   }, true);
   return response.ok ? { data: null, error: null } : errorResult(await response.text());
 }
 
+export async function likeWorkPost(postId: string) {
+  const visitorId = await getVisitorId();
+  const response = await supabaseFetch("/rest/v1/work_post_likes", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ post_id: postId, visitor_id: visitorId })
+  });
+  return response.ok || response.status === 409 ? { data: null, error: null } : errorResult(await response.text());
+}
 
+export async function addWorkPostComment(postId: string, commentText: string) {
+  const visitorId = await getVisitorId();
+  const response = await supabaseFetch("/rest/v1/work_post_comments", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ post_id: postId, visitor_id: visitorId, visitor_name: "App user", comment_text: commentText })
+  });
+  return response.ok ? { data: null, error: null } : errorResult(await response.text());
+}
+
+export async function addWorkPostShare(postId: string) {
+  const visitorId = await getVisitorId();
+  const response = await supabaseFetch("/rest/v1/work_post_shares", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ post_id: postId, visitor_id: visitorId })
+  });
+  return response.ok ? { data: null, error: null } : errorResult(await response.text());
+}
+
+export async function getWorkPostComments(postId: string): Promise<WorkPostComment[]> {
+  try {
+    const response = await supabaseFetch(`/rest/v1/work_post_comments?${makeQuery({ select: "id,post_id,visitor_name,comment_text,created_at", post_id: `eq.${postId}`, order: "created_at.desc", limit: "20" })}`);
+    if (!response.ok) return [];
+    const data = await readJson<any[]>(response);
+    return data.map((item) => ({
+      id: item.id,
+      postId: item.post_id,
+      visitorName: item.visitor_name || "App user",
+      commentText: item.comment_text || "",
+      createdAt: item.created_at
+    }));
+  } catch {
+    return [];
+  }
+}
