@@ -478,7 +478,7 @@ export function DashboardClient() {
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-brand">Worker dashboard</p>
-              <h1 className="mt-1 text-3xl font-black text-ink">Manage your profile</h1>
+              <h1 className="mt-1 text-3xl font-black text-ink">Manage profile & upload feed</h1>
             </div>
           </div>
 
@@ -546,7 +546,7 @@ export function DashboardClient() {
           </div>
 
           <div className="mt-5 rounded-xl bg-slate-50 p-4">
-            <p className="text-sm font-black text-ink">Work photo / video update</p>
+            <p className="text-sm font-black text-ink">Upload feed</p>
             <p className="mt-1 text-sm text-slate-600">Pehle preview dekho, phir upload karo. Ye public profile feed me dikhega.</p>
             <input
               value={workCaption}
@@ -793,6 +793,7 @@ function CropSlider({
     </label>
   );
 }
+
 
 
 
