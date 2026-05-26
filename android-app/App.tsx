@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Image, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
-import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { DashboardScreen } from "./src/screens/DashboardScreen";
 import { FeedScreen } from "./src/screens/FeedScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
@@ -20,14 +19,13 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ExpoStatusBar style="dark" />
       <View style={styles.header}>
         <Image source={require("./assets/header-logo.png")} style={styles.headerLogo} resizeMode="contain" />
       </View>
 
       <View style={styles.body}>
         {screen === "home" ? <HomeScreen onOpenWorker={openWorker} /> : null}
-        {screen === "feed" ? <FeedScreen /> : null}
+        {screen === "feed" ? <FeedScreen onOpenWorker={openWorker} /> : null}
         {screen === "dashboard" ? <DashboardScreen /> : null}
         {active && selectedWorker ? <WorkerProfileScreen worker={selectedWorker} onBack={() => setScreen("home")} /> : null}
       </View>
@@ -51,8 +49,8 @@ function Tab({ label, active, onPress }: { label: string; active: boolean; onPre
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff", paddingTop: StatusBar.currentHeight ?? 0 },
-  header: { height: 76, backgroundColor: "#fff", justifyContent: "center", paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: "#e2e8f0" },
-  headerLogo: { width: 230, height: 62, alignSelf: "flex-start" },
+  header: { height: 68, backgroundColor: "#fff", justifyContent: "center", paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: "#e2e8f0" },
+  headerLogo: { width: 190, height: 50, alignSelf: "flex-start" },
   body: { flex: 1 },
   tabs: { position: "absolute", left: 16, right: 16, bottom: 16, backgroundColor: "#14213d", borderRadius: 24, padding: 6, flexDirection: "row", gap: 6, shadowColor: "#0f172a", shadowOpacity: 0.22, shadowRadius: 18, elevation: 8 },
   tab: { flex: 1, paddingVertical: 13, borderRadius: 18, alignItems: "center" },
@@ -60,3 +58,5 @@ const styles = StyleSheet.create({
   tabText: { color: "#cbd5e1", fontWeight: "900" },
   activeTabText: { color: "#fff" }
 });
+
+

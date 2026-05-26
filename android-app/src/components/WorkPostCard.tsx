@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Image, Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { addWorkPostComment, addWorkPostShare, getWorkPostComments, likeWorkPost } from "../lib/api";
-import type { WorkPost, WorkPostComment } from "../types";
+import type { WorkPost, WorkPostComment, Worker } from "../types";
 
 function FeedVideo({ uri, active }: { uri: string; active: boolean }) {
   const player = useVideoPlayer(uri, (videoPlayer) => {
@@ -21,7 +21,7 @@ function FeedVideo({ uri, active }: { uri: string; active: boolean }) {
   return <VideoView player={player} style={styles.media} contentFit="contain" nativeControls={false} />;
 }
 
-export function WorkPostCard({ post, active = true }: { post: WorkPost; active?: boolean }) {
+export function WorkPostCard({ post, active = true, onOpenWorker }: { post: WorkPost; active?: boolean; onOpenWorker?: (worker: Worker) => void }) {
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [liked, setLiked] = useState(false);
@@ -66,23 +66,40 @@ export function WorkPostCard({ post, active = true }: { post: WorkPost; active?:
     }
   }
 
+  const headerContent = (
+    <View style={styles.headerInner}>
+      {post.worker?.profilePhoto ? <Image source={{ uri: post.worker.profilePhoto }} style={styles.avatar} /> : <View style={styles.avatar} />}
+      <View style={{ flex: 1 }}>
+        <Text style={styles.name}>{post.worker?.name ?? "MistriHub worker"}</Text>
+        <Text style={styles.meta}>{post.worker?.category ?? "Work update"} {post.worker?.city ? `in ${post.worker.city}` : ""}</Text>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
-        {post.worker?.profilePhoto ? <Image source={{ uri: post.worker.profilePhoto }} style={styles.avatar} /> : null}
-        <View style={{ flex: 1 }}>
-          <Text style={styles.name}>{post.worker?.name ?? "MistriHub worker"}</Text>
-          <Text style={styles.meta}>{post.worker?.category ?? "Work update"} {post.worker?.city ? `in ${post.worker.city}` : ""}</Text>
-        </View>
-      </View>
+      {post.worker && onOpenWorker ? (
+        <Pressable onPress={() => onOpenWorker(post.worker as Worker)} style={styles.header}>{headerContent}</Pressable>
+      ) : (
+        <View style={styles.header}>{headerContent}</View>
+      )}
 
       {post.mediaType === "video" ? <FeedVideo uri={post.mediaUrl} active={active} /> : <Image source={{ uri: post.mediaUrl }} style={styles.media} resizeMode="contain" />}
 
       <Text style={styles.caption}>{post.caption}</Text>
       <View style={styles.actions}>
-        <Pressable disabled={busy || liked} onPress={handleLike}><Text style={[styles.action, liked && styles.actionDone]}>Like {likeCount}</Text></Pressable>
-        <Pressable onPress={openComments}><Text style={styles.action}>Comment {commentCount}</Text></Pressable>
-        <Pressable onPress={sharePost}><Text style={styles.action}>Share</Text></Pressable>
+        <Pressable disabled={busy || liked} onPress={handleLike} style={styles.actionButton}>
+          <Text style={[styles.actionIcon, liked && styles.actionDone]}>♡</Text>
+          <Text style={[styles.actionCount, liked && styles.actionDone]}>{likeCount}</Text>
+        </Pressable>
+        <Pressable onPress={openComments} style={styles.actionButton}>
+          <Text style={styles.actionIcon}>▢</Text>
+          <Text style={styles.actionCount}>{commentCount}</Text>
+        </Pressable>
+        <Pressable onPress={sharePost} style={styles.actionButton}>
+          <Text style={styles.actionIcon}>↗</Text>
+          <Text style={styles.actionCount}>Share</Text>
+        </Pressable>
       </View>
 
       {commentOpen ? (
@@ -105,14 +122,17 @@ export function WorkPostCard({ post, active = true }: { post: WorkPost; active?:
 
 const styles = StyleSheet.create({
   card: { backgroundColor: "#fff", borderRadius: 20, marginBottom: 16, overflow: "hidden", shadowColor: "#0f172a", shadowOpacity: 0.08, shadowRadius: 12, elevation: 2 },
-  header: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12 },
+  header: { padding: 12 },
+  headerInner: { flexDirection: "row", alignItems: "center", gap: 10 },
   avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#e2e8f0" },
   name: { fontWeight: "900", color: "#14213d", fontSize: 15 },
   meta: { color: "#64748b", fontSize: 12, marginTop: 2 },
   media: { width: "100%", height: 390, backgroundColor: "#000" },
   caption: { paddingHorizontal: 12, paddingTop: 12, color: "#334155", lineHeight: 20 },
-  actions: { padding: 12, flexDirection: "row", gap: 14 },
-  action: { fontWeight: "900", color: "#0f766e" },
+  actions: { padding: 12, flexDirection: "row", alignItems: "center", gap: 12 },
+  actionButton: { minWidth: 58, minHeight: 38, borderRadius: 999, backgroundColor: "#ecfeff", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingHorizontal: 10 },
+  actionIcon: { fontSize: 20, color: "#0f766e", fontWeight: "900" },
+  actionCount: { fontSize: 12, color: "#0f766e", fontWeight: "900" },
   actionDone: { color: "#64748b" },
   commentBox: { paddingHorizontal: 12, paddingBottom: 12 },
   commentInputRow: { flexDirection: "row", gap: 8, marginBottom: 10 },

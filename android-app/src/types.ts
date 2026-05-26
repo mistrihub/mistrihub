@@ -57,7 +57,7 @@ export type WorkPost = {
   commentCount: number;
   shareCount: number;
   createdAt: string;
-  worker?: Pick<Worker, "id" | "name" | "category" | "city" | "profilePhoto">;
+  worker?: Worker;
 };
 
 export type AppScreen = "home" | "feed" | "profile" | "dashboard";
@@ -69,3 +69,4 @@ export type WorkPostComment = {
   commentText: string;
   createdAt: string;
 };
+

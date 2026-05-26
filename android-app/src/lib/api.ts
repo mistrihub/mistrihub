@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { File, UploadType } from "expo-file-system";
 import { categories } from "./categories";
 import { getStoredSession, supabaseAnonKey, supabaseFetch, supabaseUrl } from "./supabase";
 import type { CategorySlug, Review, WorkPost, WorkPostComment, Worker } from "../types";
@@ -279,17 +280,22 @@ export async function saveWorkerProfile(userId: string, input: Partial<Worker>) 
 export async function uploadMedia(userId: string, uri: string, folder: "profile" | "work", mediaType: "image" | "video") {
   const session = await getStoredSession();
   if (!session) throw new Error("Please login first.");
-  const response = await fetch(uri);
-  const blob = await response.blob();
   const ext = mediaType === "video" ? "mp4" : "jpg";
   const path = `${userId}/${folder}/${Date.now()}.${ext}`;
   const contentType = mediaType === "video" ? "video/mp4" : "image/jpeg";
-  const upload = await fetch(`${supabaseUrl}/storage/v1/object/worker-images/${path}`, {
-    method: "POST",
-    headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${session.access_token}`, "Content-Type": contentType, "x-upsert": "true" },
-    body: blob as any
+  const file = new File(uri);
+  const result = await file.upload(`${supabaseUrl}/storage/v1/object/worker-images/${path}`, {
+    httpMethod: "POST",
+    uploadType: UploadType.BINARY_CONTENT,
+    mimeType: contentType,
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": contentType,
+      "x-upsert": "true"
+    }
   });
-  if (!upload.ok) throw new Error(await upload.text());
+  if (result.status < 200 || result.status >= 300) throw new Error(result.body || `Upload failed: ${result.status}`);
   return `${supabaseUrl}/storage/v1/object/public/worker-images/${path}`;
 }
 
@@ -350,3 +356,5 @@ export async function getWorkPostComments(postId: string): Promise<WorkPostComme
     return [];
   }
 }
+
+

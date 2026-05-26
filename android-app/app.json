@@ -24,7 +24,9 @@
         "INTERNET",
         "READ_MEDIA_IMAGES",
         "READ_MEDIA_VIDEO",
-        "CAMERA"
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ],
       "intentFilters": [
         {
@@ -52,6 +54,10 @@
       "eas": {
         "projectId": "690de12f-b06b-4ea4-ad8c-6d632577e7fd"
       }
-    }
+    },
+    "plugins": [
+      "expo-video",
+      "expo-image-picker"
+    ]
   }
 }

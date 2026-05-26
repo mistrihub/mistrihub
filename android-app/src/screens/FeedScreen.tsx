@@ -4,7 +4,7 @@ import { getWorkPosts, getWorkers } from "../lib/api";
 import type { WorkPost, Worker } from "../types";
 import { WorkPostCard } from "../components/WorkPostCard";
 
-export function FeedScreen() {
+export function FeedScreen({ onOpenWorker }: { onOpenWorker: (worker: Worker) => void }) {
   const [posts, setPosts] = useState<WorkPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePostId, setActivePostId] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export function FeedScreen() {
       contentContainerStyle={styles.content}
       data={posts}
       keyExtractor={(post) => post.id}
-      renderItem={({ item }) => <WorkPostCard post={item} active={activePostId === item.id} />}
+      renderItem={({ item }) => <WorkPostCard post={item} active={activePostId === item.id} onOpenWorker={onOpenWorker} />}
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}
       ListHeaderComponent={(
@@ -59,3 +59,4 @@ const styles = StyleSheet.create({
   subtitle: { color: "#64748b", marginTop: 6, marginBottom: 16 },
   empty: { textAlign: "center", color: "#64748b", marginTop: 40, fontWeight: "800" }
 });
+
