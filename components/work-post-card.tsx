@@ -50,10 +50,6 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
   const profileUrl = useMemo(() => (typeof window === "undefined" ? `/workers/${post.worker.id}` : `${window.location.origin}/workers/${post.worker.id}`), [post.worker.id]);
   const isDemoPost = post.id.includes("gallery");
   const postVideoId = `work-video-${post.id}`;
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setSoundEnabled(window.localStorage.getItem("mistrihub_sound_enabled") === "true");
-  }, []);
 
   useEffect(() => {
     if (post.mediaType !== "video") return;
@@ -277,7 +273,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     const video = previewVideoRef.current;
     setSoundEnabled(true);
     setShowSoundPrompt(false);
-    window.localStorage.setItem("mistrihub_sound_enabled", "true");
+
     if (!video) return;
     video.muted = false;
     video.volume = 1;
@@ -293,7 +289,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
             <img src={post.mediaUrl} alt={`${post.worker.name} work update`} className="h-auto max-h-[520px] w-auto max-w-full object-contain" loading="lazy" decoding="async" />
           )}
           {post.mediaType === "video" && showSoundPrompt ? (
-            <button type="button" onClick={enableSound} className="absolute bottom-3 right-3 rounded-full bg-white/95 px-3 py-1.5 text-xs font-black text-ink shadow-lg">Sound on</button>
+            <button type="button" onClick={enableSound} className="absolute bottom-3 right-3 rounded-full bg-white/95 px-3 py-1.5 text-xs font-black text-ink shadow-lg">Allow audio</button>
           ) : null}
         </div>
       </div>
@@ -375,7 +371,7 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
             </button>
             <div className="flex min-h-0 flex-1 items-center justify-center bg-black p-2 sm:p-4">
               {post.mediaType === "video" ? (
-                <video ref={lightboxVideoRef} className="h-auto max-h-[90dvh] w-auto max-w-full object-contain" src={post.mediaUrl} controls autoPlay playsInline preload="auto" />
+                <video ref={lightboxVideoRef} className="h-auto max-h-[90dvh] w-auto max-w-full object-contain" src={post.mediaUrl} controls autoPlay muted={!soundEnabled} playsInline preload="auto" />
               ) : (
                 <img src={post.mediaUrl} alt={`${post.worker.name} work update full view`} className="h-auto max-h-[90dvh] w-auto max-w-full object-contain" decoding="async" />
               )}
@@ -386,6 +382,9 @@ export function WorkPostCard({ post }: WorkPostCardProps) {
     </article>
   );
 }
+
+
+
 
 
 
