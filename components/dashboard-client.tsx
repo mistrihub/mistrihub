@@ -134,6 +134,7 @@ export function DashboardClient() {
   const [workUploading, setWorkUploading] = useState(false);
   const [status, setStatus] = useState("Loading dashboard...");
   const [saving, setSaving] = useState(false);
+  const [activePanel, setActivePanel] = useState<"profile" | "upload">("profile");
   const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
   const [cropSaving, setCropSaving] = useState(false);
   const cropDragRef = useRef<{ pointerId: number; startX: number; startY: number; offsetX: number; offsetY: number } | null>(null);
@@ -468,17 +469,35 @@ export function DashboardClient() {
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="mb-4 grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setActivePanel("profile")}
+            className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black transition ${activePanel === "profile" ? "bg-brand text-white" : "bg-white text-ink shadow-sm"}`}
+          >
+            <Save className="h-4 w-4" aria-hidden="true" />
+            Profile edit
+          </button>
+          <button
+            type="button"
+            onClick={() => setActivePanel("upload")}
+            className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black transition ${activePanel === "upload" ? "bg-brand text-white" : "bg-white text-ink shadow-sm"}`}
+          >
+            <Video className="h-4 w-4" aria-hidden="true" />
+            Upload feed
+          </button>
+        </div>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             void saveProfile();
           }}
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft"
+          className={`${activePanel === "profile" ? "block" : "hidden"} rounded-xl border border-slate-200 bg-white p-5 shadow-soft`}
         >
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-brand">Worker dashboard</p>
-              <h1 className="mt-1 text-3xl font-black text-ink">Manage profile & upload feed</h1>
+              <h1 className="mt-1 text-3xl font-black text-ink">Worker dashboard</h1>
             </div>
           </div>
 
@@ -545,7 +564,7 @@ export function DashboardClient() {
             <UploadBox label="Upload profile photo" icon={<UploadCloud className="h-5 w-5" />} onChange={onProfilePhotoChange} />
           </div>
 
-          <div className="mt-5 rounded-xl bg-slate-50 p-4">
+          <div className="hidden">
             <p className="text-sm font-black text-ink">Upload feed</p>
             <p className="mt-1 text-sm text-slate-600">Pehle preview dekho, phir upload karo. Ye public profile feed me dikhega.</p>
             <input
@@ -635,8 +654,91 @@ export function DashboardClient() {
           </div>
         </form>
 
+        {activePanel === "upload" ? (
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+            <div className="mb-5">
+              <p className="text-sm font-bold uppercase tracking-wide text-brand">Upload feed</p>
+              <h1 className="mt-1 text-3xl font-black text-ink">Work photo / video update</h1>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Pehle preview dekho, phir upload karo. Ye public profile feed me dikhega.</p>
+            </div>
+            <input
+              value={workCaption}
+              onChange={(event) => setWorkCaption(event.target.value)}
+              className="h-11 w-full rounded-lg bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-teal-100"
+              placeholder="Caption, example: Bathroom plumbing repair completed"
+            />
+            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-slate-50 p-4 text-sm font-bold text-slate-700 shadow-sm transition hover:text-brand">
+              <Video className="h-5 w-5" aria-hidden="true" />
+              Choose work photo or video
+              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,video/mp4,video/webm" onChange={(event) => onWorkPostMediaChange(event.target.files)} className="sr-only" />
+            </label>
+
+            {workDraft ? (
+              <div className="mt-4 rounded-xl bg-slate-50 p-3 shadow-sm">
+                <p className="mb-2 text-sm font-bold text-ink">Preview before upload</p>
+                <div className="flex max-h-[520px] w-full items-center justify-center overflow-hidden rounded-lg bg-black/95">
+                  {workDraft.mediaType === "video" ? (
+                    <video src={workDraft.objectUrl} controls playsInline className="h-auto max-h-[520px] w-auto max-w-full object-contain" />
+                  ) : (
+                    <img src={workDraft.objectUrl} alt="Work update preview" className="h-auto max-h-[520px] w-auto max-w-full object-contain" />
+                  )}
+                </div>
+                <p className="mt-3 text-xs font-semibold text-slate-500">Original photo/video shape will be uploaded. No crop will be applied.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => void uploadWorkDraft()}
+                    disabled={workUploading}
+                    className="inline-flex h-11 items-center justify-center rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-70"
+                  >
+                    {workUploading ? "Uploading..." : "Upload update"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      URL.revokeObjectURL(workDraft.objectUrl);
+                      setWorkDraft(null);
+                    }}
+                    className="inline-flex h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-bold text-ink"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {workPosts.length > 0 ? (
+              <div className="mt-5 space-y-3">
+                <p className="text-sm font-black text-ink">Uploaded work updates</p>
+                {workPosts.map((post) => (
+                  <div key={post.id} className="flex gap-3 rounded-lg bg-slate-50 p-3 shadow-sm">
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/90">
+                      {post.media_type === "video" ? (
+                        <video src={post.media_url} className="h-auto max-h-24 w-auto max-w-full object-contain" />
+                      ) : (
+                        <img src={post.media_url} alt={post.caption} className="h-auto max-h-24 w-auto max-w-full object-contain" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-sm font-bold text-ink">{post.caption}</p>
+                      <p className="mt-1 text-xs text-slate-500">Visible on public profile</p>
+                      <button
+                        type="button"
+                        onClick={() => void deleteWorkPost(post.id)}
+                        className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-rose-600"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
         <aside className="space-y-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+          <div className={`${activePanel === "profile" ? "block" : "hidden"} rounded-xl border border-slate-200 bg-white p-5 shadow-soft`}>
             <Link
               href={publicProfileUrl || "/dashboard"}
               className="relative block aspect-[4/3] overflow-hidden rounded-lg bg-white outline-none focus-visible:outline-none focus-visible:ring-0"
@@ -793,6 +895,7 @@ function CropSlider({
     </label>
   );
 }
+
 
 
 
