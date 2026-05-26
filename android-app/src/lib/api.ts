@@ -237,6 +237,17 @@ export async function getWorkPosts(limit = 30): Promise<WorkPost[]> {
   }
 }
 
+
+export async function getWorkerWorkPosts(workerId: string, limit = 30): Promise<WorkPost[]> {
+  try {
+    const response = await supabaseFetch(`/rest/v1/work_posts?${makeQuery({ select: "*", worker_id: `eq.${workerId}`, order: "created_at.desc", limit: String(limit) })}`);
+    if (!response.ok) return [];
+    const data = await readJson<WorkPostRow[]>(response);
+    return data.map(mapPost);
+  } catch {
+    return [];
+  }
+}
 export async function getMyWorkerProfile(userId: string) {
   try {
     const response = await supabaseFetch(`/rest/v1/workers?${makeQuery({ select: workerSelect, user_id: `eq.${userId}`, limit: "1" })}`, {}, true);
@@ -337,7 +348,7 @@ export async function addWorkPostShare(postId: string) {
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify({ post_id: postId, visitor_id: visitorId })
   });
-  return response.ok ? { data: null, error: null } : errorResult(await response.text());
+  return response.ok || response.status === 409 ? { data: null, error: null } : errorResult(await response.text());
 }
 
 export async function getWorkPostComments(postId: string): Promise<WorkPostComment[]> {
@@ -356,5 +367,7 @@ export async function getWorkPostComments(postId: string): Promise<WorkPostComme
     return [];
   }
 }
+
+
 
 

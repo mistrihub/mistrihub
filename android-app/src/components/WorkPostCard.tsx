@@ -29,6 +29,7 @@ export function WorkPostCard({ post, active = true, onOpenWorker }: { post: Work
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<WorkPostComment[]>([]);
   const [busy, setBusy] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
 
   async function sharePost() {
     await addWorkPostShare(post.id);
@@ -84,21 +85,28 @@ export function WorkPostCard({ post, active = true, onOpenWorker }: { post: Work
         <View style={styles.header}>{headerContent}</View>
       )}
 
-      {post.mediaType === "video" ? <FeedVideo uri={post.mediaUrl} active={active} /> : <Image source={{ uri: post.mediaUrl }} style={styles.media} resizeMode="contain" />}
+      {post.mediaType === "video" ? (
+        <Pressable onPress={() => setVideoPaused((current) => !current)} style={styles.videoWrap}>
+          <FeedVideo uri={post.mediaUrl} active={active && !videoPaused} />
+          {videoPaused ? <View style={styles.pausedBadge}><Text style={styles.pausedText}>Paused</Text></View> : null}
+        </Pressable>
+      ) : (
+        <Image source={{ uri: post.mediaUrl }} style={styles.media} resizeMode="contain" />
+      )}
 
       <Text style={styles.caption}>{post.caption}</Text>
       <View style={styles.actions}>
-        <Pressable disabled={busy || liked} onPress={handleLike} style={styles.actionButton}>
-          <Text style={[styles.actionIcon, liked && styles.actionDone]}>♡</Text>
-          <Text style={[styles.actionCount, liked && styles.actionDone]}>{likeCount}</Text>
+        <Pressable disabled={busy || liked} onPress={handleLike} style={[styles.actionButton, styles.likeButton]}>
+          <Text style={[styles.actionIcon, styles.likeIcon, liked && styles.actionDone]}>♥</Text>
+          <Text style={[styles.actionCount, styles.likeIcon, liked && styles.actionDone]}>{likeCount}</Text>
         </Pressable>
-        <Pressable onPress={openComments} style={styles.actionButton}>
-          <Text style={styles.actionIcon}>▢</Text>
-          <Text style={styles.actionCount}>{commentCount}</Text>
+        <Pressable onPress={openComments} style={[styles.actionButton, styles.commentButtonSoft]}>
+          <Text style={[styles.actionIcon, styles.commentIcon]}>▣</Text>
+          <Text style={[styles.actionCount, styles.commentIcon]}>{commentCount}</Text>
         </Pressable>
-        <Pressable onPress={sharePost} style={styles.actionButton}>
-          <Text style={styles.actionIcon}>↗</Text>
-          <Text style={styles.actionCount}>Share</Text>
+        <Pressable onPress={sharePost} style={[styles.actionButton, styles.shareButtonSoft]}>
+          <Text style={[styles.actionIcon, styles.shareIcon]}>↗</Text>
+          <Text style={[styles.actionCount, styles.shareIcon]}>Share</Text>
         </Pressable>
       </View>
 
@@ -127,12 +135,21 @@ const styles = StyleSheet.create({
   avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#e2e8f0" },
   name: { fontWeight: "900", color: "#14213d", fontSize: 15 },
   meta: { color: "#64748b", fontSize: 12, marginTop: 2 },
+  videoWrap: { position: "relative", width: "100%", height: 390, backgroundColor: "#000" },
   media: { width: "100%", height: 390, backgroundColor: "#000" },
+  pausedBadge: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.18)" },
+  pausedText: { color: "#fff", backgroundColor: "rgba(15,23,42,0.78)", paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999, fontWeight: "900" },
   caption: { paddingHorizontal: 12, paddingTop: 12, color: "#334155", lineHeight: 20 },
   actions: { padding: 12, flexDirection: "row", alignItems: "center", gap: 12 },
-  actionButton: { minWidth: 58, minHeight: 38, borderRadius: 999, backgroundColor: "#ecfeff", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingHorizontal: 10 },
-  actionIcon: { fontSize: 20, color: "#0f766e", fontWeight: "900" },
-  actionCount: { fontSize: 12, color: "#0f766e", fontWeight: "900" },
+  actionButton: { minWidth: 58, minHeight: 38, borderRadius: 999, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingHorizontal: 10 },
+  likeButton: { backgroundColor: "#fff1e8" },
+  commentButtonSoft: { backgroundColor: "#e8f3ff" },
+  shareButtonSoft: { backgroundColor: "#e6fffb" },
+  actionIcon: { fontSize: 20, fontWeight: "900" },
+  actionCount: { fontSize: 12, fontWeight: "900" },
+  likeIcon: { color: "#f97316" },
+  commentIcon: { color: "#0b76d1" },
+  shareIcon: { color: "#0f766e" },
   actionDone: { color: "#64748b" },
   commentBox: { paddingHorizontal: 12, paddingBottom: 12 },
   commentInputRow: { flexDirection: "row", gap: 8, marginBottom: 10 },

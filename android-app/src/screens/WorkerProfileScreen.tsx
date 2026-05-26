@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { addReview, getReviews } from "../lib/api";
-import type { Review, Worker } from "../types";
+import { addReview, getReviews, getWorkerWorkPosts } from "../lib/api";
+import type { Review, WorkPost, Worker } from "../types";
+import { WorkPostCard } from "../components/WorkPostCard";
 
 export function WorkerProfileScreen({ worker, onBack }: { worker: Worker; onBack: () => void }) {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [workPosts, setWorkPosts] = useState<WorkPost[]>([]);
   const [rating, setRating] = useState("5");
   const [reviewText, setReviewText] = useState("");
 
   useEffect(() => {
     getReviews(worker.id).then(setReviews);
-  }, [worker.id]);
+    getWorkerWorkPosts(worker.id, 40).then((posts) => setWorkPosts(posts.map((post) => ({ ...post, worker }))));
+  }, [worker]);
 
   function callWorker() {
     Linking.openURL(`tel:${worker.phone}`);
@@ -57,6 +60,11 @@ export function WorkerProfileScreen({ worker, onBack }: { worker: Worker; onBack
         {worker.serviceDetails.map((item) => <Text key={item} style={styles.bullet}>• {item}</Text>)}
       </View>
 
+      <View style={styles.feedBlock}>
+        <Text style={styles.heading}>Work photos & videos</Text>
+        {workPosts.length === 0 ? <Text style={styles.desc}>No work updates uploaded yet.</Text> : workPosts.map((post) => <WorkPostCard key={post.id} post={post} active />)}
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.heading}>Add review</Text>
         <TextInput value={rating} onChangeText={setRating} keyboardType="number-pad" placeholder="Rating 1-5" style={styles.input} />
@@ -83,6 +91,7 @@ const styles = StyleSheet.create({
   back: { alignSelf: "flex-start", paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "#e0f2fe", borderRadius: 12, marginBottom: 12 },
   backText: { color: "#0369a1", fontWeight: "900" },
   card: { backgroundColor: "#fff", borderRadius: 22, padding: 16, marginBottom: 14, shadowColor: "#0f172a", shadowOpacity: 0.08, shadowRadius: 12, elevation: 2 },
+  feedBlock: { marginBottom: 14 },
   photo: { width: "100%", height: 260, borderRadius: 18, backgroundColor: "#e2e8f0" },
   name: { fontSize: 26, fontWeight: "900", color: "#14213d", marginTop: 14 },
   meta: { color: "#0f766e", fontWeight: "900", marginTop: 4 },
@@ -101,3 +110,4 @@ const styles = StyleSheet.create({
   review: { borderTopWidth: 1, borderTopColor: "#e2e8f0", paddingTop: 10, marginTop: 10 },
   reviewName: { color: "#14213d", fontWeight: "900" }
 });
+
