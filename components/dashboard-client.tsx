@@ -217,6 +217,12 @@ export function DashboardClient() {
     };
   }, [cropObjectUrl]);
 
+  function switchPanel(panel: "profile" | "upload") {
+    setActivePanel(panel);
+    const nextUrl = `/dashboard?panel=${panel}`;
+    window.history.replaceState(null, "", nextUrl);
+  }
+
   function updateField<Key extends keyof DashboardWorker>(key: Key, value: DashboardWorker[Key]) {
     setProfile((current) => ({ ...current, [key]: value }));
   }
@@ -494,7 +500,7 @@ export function DashboardClient() {
           </Link>
           <button
             type="button"
-            onClick={() => setActivePanel("profile")}
+            onClick={() => switchPanel("profile")}
             className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black transition ${activePanel === "profile" ? "bg-brand text-white" : "bg-white text-ink shadow-sm"}`}
           >
             <Save className="h-4 w-4" aria-hidden="true" />
@@ -502,7 +508,7 @@ export function DashboardClient() {
           </button>
           <button
             type="button"
-            onClick={() => setActivePanel("upload")}
+            onClick={() => switchPanel("upload")}
             className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black transition ${activePanel === "upload" ? "bg-brand text-white" : "bg-white text-ink shadow-sm"}`}
           >
             <Video className="h-4 w-4" aria-hidden="true" />
@@ -780,6 +786,10 @@ export function DashboardClient() {
                 View public profile
               </Link>
             ) : null}
+            <button type="button" onClick={logout} className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-rose-50 text-sm font-bold text-rose-700">
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Logout
+            </button>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
             <p className="font-bold text-ink">Status</p>
@@ -917,6 +927,10 @@ function CropSlider({
     </label>
   );
 }
+
+
+
+
 
 
 

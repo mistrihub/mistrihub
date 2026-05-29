@@ -76,9 +76,9 @@ export function HeaderAccount() {
 }
 
 export function HeaderDashboardButton() {
-  const { loggedIn, workerId } = useHeaderWorker();
+  const { loggedIn } = useHeaderWorker();
 
-  if (!loggedIn || !workerId) return null;
+  if (!loggedIn) return null;
 
   return (
     <div className="flex items-center gap-2">
@@ -101,3 +101,5 @@ export function HeaderDashboardButton() {
     </div>
   );
 }
+
+
