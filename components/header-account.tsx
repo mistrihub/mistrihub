@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { LayoutDashboard, UserPlus } from "lucide-react";
+import { Pencil, UploadCloud, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 
@@ -57,13 +57,38 @@ export function HeaderAccount() {
 }
 
 export function HeaderDashboardButton() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    async function loadSession() {
+      if (!hasSupabaseConfig || !supabase) return;
+      const { data } = await supabase.auth.getSession();
+      setLoggedIn(Boolean(data.session));
+    }
+
+    void loadSession();
+  }, []);
+
+  if (!loggedIn) return null;
+
   return (
-    <Link
-      href="/dashboard"
-      className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-ink transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-10"
-      aria-label="Worker dashboard"
-    >
-      <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
-    </Link>
+    <div className="flex items-center gap-2">
+      <Link
+        href="/dashboard?panel=profile"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-ink transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-10"
+        aria-label="Edit worker profile"
+        title="Edit profile"
+      >
+        <Pencil className="h-4 w-4" aria-hidden="true" />
+      </Link>
+      <Link
+        href="/dashboard?panel=upload"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-10"
+        aria-label="Upload work feed"
+        title="Upload feed"
+      >
+        <UploadCloud className="h-4 w-4" aria-hidden="true" />
+      </Link>
+    </div>
   );
 }

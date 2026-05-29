@@ -125,6 +125,8 @@ async function prepareProfileImageFile(crop: CropDraft) {
 
 export function DashboardClient() {
   const router = useRouter();
+  const [requestedPanel, setRequestedPanel] = useState<string | null>(null);
+  const [panelReady, setPanelReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<DashboardWorker>(emptyProfile);
   const [servicesText, setServicesText] = useState("");
@@ -144,7 +146,16 @@ export function DashboardClient() {
   }, [profile.id]);
 
   useEffect(() => {
+    const panel = new URLSearchParams(window.location.search).get("panel");
+    setRequestedPanel(panel);
+    if (panel === "upload") setActivePanel("upload");
+    if (panel === "profile") setActivePanel("profile");
+    setPanelReady(true);
+  }, []);
+  useEffect(() => {
     async function load() {
+      if (!panelReady) return;
+
       if (!hasSupabaseConfig || !supabase) {
         setStatus("Add Supabase keys to .env.local to enable the dashboard.");
         return;
@@ -180,6 +191,10 @@ export function DashboardClient() {
 
       setProfile(nextProfile);
       setServicesText(nextProfile.service_details.join("\n"));
+      if (data && requestedPanel !== "profile" && requestedPanel !== "upload") {
+        router.replace(`/workers/${nextProfile.id}`);
+        return;
+      }
       if (data) {
         const { data: postData } = await supabase
           .from("work_posts")
@@ -192,7 +207,7 @@ export function DashboardClient() {
     }
 
     load();
-  }, []);
+  }, [panelReady, requestedPanel, router]);
 
   const cropObjectUrl = cropDraft?.objectUrl;
 
@@ -902,6 +917,11 @@ function CropSlider({
     </label>
   );
 }
+
+
+
+
+
 
 
 
