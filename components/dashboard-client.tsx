@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { LogOut, Save, Trash2, UploadCloud, Video, X } from "lucide-react";
+import { Eye, LogOut, Save, Trash2, UploadCloud, Video, X } from "lucide-react";
 import { categories } from "@/lib/categories";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 
@@ -469,14 +469,21 @@ export function DashboardClient() {
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <div className="mb-4 grid gap-2 sm:grid-cols-2">
+        <div className="mb-4 grid gap-2 sm:grid-cols-3">
+          <Link
+            href={publicProfileUrl || "/dashboard"}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white text-sm font-black text-ink shadow-sm transition hover:text-brand"
+          >
+            <Eye className="h-4 w-4" aria-hidden="true" />
+            View profile
+          </Link>
           <button
             type="button"
             onClick={() => setActivePanel("profile")}
             className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black transition ${activePanel === "profile" ? "bg-brand text-white" : "bg-white text-ink shadow-sm"}`}
           >
             <Save className="h-4 w-4" aria-hidden="true" />
-            Profile edit
+            Edit profile
           </button>
           <button
             type="button"
@@ -895,6 +902,7 @@ function CropSlider({
     </label>
   );
 }
+
 
 
 

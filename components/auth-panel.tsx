@@ -34,6 +34,17 @@ export function AuthPanel() {
       return;
     }
 
+    if (mode === "login") {
+      const userId = response.data.user?.id;
+      if (userId) {
+        const { data: worker } = await supabase.from("workers").select("id").eq("user_id", userId).maybeSingle();
+        if (worker?.id) {
+          router.push(`/workers/${worker.id}`);
+          return;
+        }
+      }
+    }
+
     setMessage(mode === "signup" ? "Account created. Check your email if confirmation is enabled." : "Logged in.");
     router.push("/dashboard");
   }
@@ -97,3 +108,5 @@ export function AuthPanel() {
     </div>
   );
 }
+
+
