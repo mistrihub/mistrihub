@@ -6,9 +6,18 @@ import { Pencil, UploadCloud, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 
-export function HeaderAccount() {
-  const [profilePhoto, setProfilePhoto] = useState("");
-  const [workerId, setWorkerId] = useState("");
+type HeaderWorkerState = {
+  loggedIn: boolean;
+  workerId: string;
+  profilePhoto: string;
+};
+
+function useHeaderWorker() {
+  const [state, setState] = useState<HeaderWorkerState>({
+    loggedIn: false,
+    workerId: "",
+    profilePhoto: ""
+  });
 
   useEffect(() => {
     async function loadAccount() {
@@ -16,7 +25,10 @@ export function HeaderAccount() {
 
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
-      if (!userId) return;
+      if (!userId) {
+        setState({ loggedIn: false, workerId: "", profilePhoto: "" });
+        return;
+      }
 
       const { data } = await supabase
         .from("workers")
@@ -24,19 +36,26 @@ export function HeaderAccount() {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (data) {
-        setWorkerId(String(data.id));
-        setProfilePhoto(String(data.profile_photo || ""));
-      }
+      setState({
+        loggedIn: true,
+        workerId: data?.id ? String(data.id) : "",
+        profilePhoto: data?.profile_photo ? String(data.profile_photo) : ""
+      });
     }
 
     void loadAccount();
   }, []);
 
-  if (profilePhoto) {
+  return state;
+}
+
+export function HeaderAccount() {
+  const { loggedIn, workerId, profilePhoto } = useHeaderWorker();
+
+  if (loggedIn && profilePhoto) {
     return (
       <Link
-        href={workerId ? `/workers/${workerId}` : "/dashboard"}
+        href={workerId ? `/workers/${workerId}` : "/dashboard?panel=profile"}
         className="relative inline-flex h-10 w-10 overflow-hidden rounded-full bg-slate-100 ring-2 ring-teal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         aria-label="View logged in worker profile"
       >
@@ -57,19 +76,9 @@ export function HeaderAccount() {
 }
 
 export function HeaderDashboardButton() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const { loggedIn, workerId } = useHeaderWorker();
 
-  useEffect(() => {
-    async function loadSession() {
-      if (!hasSupabaseConfig || !supabase) return;
-      const { data } = await supabase.auth.getSession();
-      setLoggedIn(Boolean(data.session));
-    }
-
-    void loadSession();
-  }, []);
-
-  if (!loggedIn) return null;
+  if (!loggedIn || !workerId) return null;
 
   return (
     <div className="flex items-center gap-2">
