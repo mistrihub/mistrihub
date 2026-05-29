@@ -179,23 +179,23 @@ export async function getWorkers(filters: { category?: string; city?: string; ra
     params.order = filters.sort === "experience" ? "experience_years.desc,rating.desc" : "rating.desc,review_count.desc";
 
     const response = await supabaseFetch(`/rest/v1/workers?${makeQuery(params)}`);
-    if (!response.ok) return demoWorkers.filter((worker) => workerMatchesCategory(worker, filters.category));
+    if (!response.ok) return [];
     const data = await readJson<WorkerRow[]>(response);
     const workers = safeWorkers(data.map(mapWorker)).filter((worker) => workerMatchesCategory(worker, filters.category));
     return workers.length ? workers : [];
   } catch {
-    return demoWorkers.filter((worker) => workerMatchesCategory(worker, filters.category));
+    return [];
   }
 }
 
 export async function getWorkerById(id: string) {
   try {
     const response = await supabaseFetch(`/rest/v1/workers?${makeQuery({ select: workerSelect, id: `eq.${id}`, limit: "1" })}`);
-    if (!response.ok) return demoWorkers.find((worker) => worker.id === id) ?? null;
+    if (!response.ok) return null;
     const data = await readJson<WorkerRow[]>(response);
-    return data[0] ? mapWorker(data[0]) : demoWorkers.find((worker) => worker.id === id) ?? null;
+    return data[0] ? mapWorker(data[0]) : null;
   } catch {
-    return demoWorkers.find((worker) => worker.id === id) ?? null;
+    return null;
   }
 }
 
@@ -348,7 +348,8 @@ export async function addWorkPostShare(postId: string) {
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify({ post_id: postId, visitor_id: visitorId })
   });
-  return response.ok || response.status === 409 ? { data: null, error: null } : errorResult(await response.text());
+  if (response.status === 409) return { data: { alreadyShared: true }, error: null };
+  return response.ok ? { data: { alreadyShared: false }, error: null } : errorResult(await response.text());
 }
 
 
@@ -375,6 +376,8 @@ export async function getWorkPostComments(postId: string): Promise<WorkPostComme
     return [];
   }
 }
+
+
 
 
 

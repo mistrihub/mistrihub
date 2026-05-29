@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { categories } from "../lib/categories";
-import { demoWorkers, getWorkers } from "../lib/api";
+import { getWorkers } from "../lib/api";
 import type { Worker } from "../types";
 import { WorkerCard } from "../components/WorkerCard";
 
 export function HomeScreen({ onOpenWorker }: { onOpenWorker: (worker: Worker) => void }) {
-  const [workers, setWorkers] = useState<Worker[]>(demoWorkers);
+  const [workers, setWorkers] = useState<Worker[]>([]);
   const [category, setCategory] = useState("");
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ export function HomeScreen({ onOpenWorker }: { onOpenWorker: (worker: Worker) =>
       const data = await getWorkers({ category: nextCategory || undefined, city: nextCity || undefined, sort: "rating" });
       setWorkers(data);
     } catch {
-      setWorkers(demoWorkers);
+      setWorkers([]);
     } finally {
       setLoading(false);
     }
@@ -79,3 +79,5 @@ const styles = StyleSheet.create({
   activeChipText: { color: "#fff" },
   loadedText: { color: "#64748b", fontWeight: "800", marginBottom: 10 }
 });
+
+

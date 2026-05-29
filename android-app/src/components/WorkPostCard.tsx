@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Image, Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { addWorkPostComment, addWorkPostShare, deleteWorkPost, getWorkPostComments, likeWorkPost } from "../lib/api";
+import { siteUrl } from "../lib/supabase";
 import type { WorkPost, WorkPostComment, Worker } from "../types";
 
 const likeIcon = require("../../assets/like.png");
@@ -39,7 +40,25 @@ export function WorkPostCard({ post, active = true, onOpenWorker, canDelete = fa
 
   async function sharePost() {
     if (busy) return;
-    await Share.share({ message: `${post.caption}\nShared from MistriHub` });
+    const baseUrl = siteUrl.replace(/\/$/, "");
+    const workerId = post.worker?.id ?? post.workerId;
+    const profileUrl = `${baseUrl}/workers/${workerId}`;
+    const workerLine = post.worker
+      ? `${post.worker.name} - ${post.worker.category}${post.worker.city ? ` in ${post.worker.city}` : ""}`
+      : "MistriHub.in worker";
+    const message = [
+      "MistriHub.in work update",
+      workerLine,
+      post.caption,
+      `Profile: ${profileUrl}`,
+      `Photo/Video: ${post.mediaUrl}`
+    ].filter(Boolean).join("\n");
+
+    await Share.share({
+      title: "MistriHub.in work update",
+      message,
+      url: profileUrl
+    });
     if (shared) return;
     setBusy(true);
     const { data, error } = await addWorkPostShare(post.id);
@@ -53,12 +72,13 @@ export function WorkPostCard({ post, active = true, onOpenWorker, canDelete = fa
 
   async function handleLike() {
     if (busy || liked) return;
-    setBusy(true);
+    setLiked(true);
+    setLikeCount((count) => count + 1);
     const { error } = await likeWorkPost(post.id);
-    setBusy(false);
-    if (!error) {
-      setLiked(true);
-      setLikeCount((count) => count + 1);
+    if (error) {
+      setLiked(false);
+      setLikeCount((count) => Math.max(0, count - 1));
+      Alert.alert("Like failed", error.message);
     }
   }
 
@@ -202,6 +222,10 @@ const styles = StyleSheet.create({
   commentName: { color: "#14213d", fontWeight: "900", fontSize: 12 },
   commentText: { color: "#334155", marginTop: 2 }
 });
+
+
+
+
 
 
 

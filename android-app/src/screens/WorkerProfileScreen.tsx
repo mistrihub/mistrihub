@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, FlatList, Image, Linking, Pressable, StyleSheet, Text, TextInput, View, ViewToken } from "react-native";
+import { Alert, FlatList, Image, Linking, Pressable, Share, StyleSheet, Text, TextInput, View, ViewToken } from "react-native";
 import { addReview, getReviews, getWorkerWorkPosts } from "../lib/api";
+import { siteUrl } from "../lib/supabase";
 import type { Review, WorkPost, Worker } from "../types";
 import { WorkPostCard } from "../components/WorkPostCard";
 
@@ -29,9 +30,29 @@ export function WorkerProfileScreen({ worker, onBack, onEdit, onUpload }: { work
     Linking.openURL(`tel:${worker.phone}`);
   }
 
+  async function shareWorkerProfile() {
+    const baseUrl = siteUrl.replace(/\/$/, "");
+    const profileUrl = `${baseUrl}/workers/${worker.id}`;
+    const message = [
+      "MistriHub.in worker profile",
+      `${worker.name} - ${worker.category} in ${worker.city}`,
+      worker.shortDescription || worker.bio,
+      `Profile: ${profileUrl}`
+    ].filter(Boolean).join("\n");
+
+    await Share.share({
+      title: `${worker.name} on MistriHub.in`,
+      message,
+      url: profileUrl
+    });
+  }
+
   function whatsappWorker() {
     const phone = worker.whatsapp.replace(/\D/g, "");
-    Linking.openURL(`https://wa.me/${phone}?text=Hi ${worker.name}, I found your profile on MistriHub.`);
+    const baseUrl = siteUrl.replace(/\/$/, "");
+    const profileUrl = `${baseUrl}/workers/${worker.id}`;
+    const message = encodeURIComponent(`Hi ${worker.name}, I found your profile on MistriHub.in: ${profileUrl}`);
+    Linking.openURL(`https://wa.me/${phone}?text=${message}`);
   }
 
   async function submitReview() {
@@ -71,6 +92,7 @@ export function WorkerProfileScreen({ worker, onBack, onEdit, onUpload }: { work
           <Pressable onPress={whatsappWorker} style={styles.primary}><Text style={styles.primaryText}>WhatsApp</Text></Pressable>
           <Pressable onPress={callWorker} style={styles.secondary}><Text style={styles.secondaryText}>Call</Text></Pressable>
         </View>
+        <Pressable onPress={shareWorkerProfile} style={styles.shareProfile}><Text style={styles.shareProfileText}>Share profile</Text></Pressable>
       </View>
 
       <View style={styles.card}>
@@ -142,6 +164,8 @@ const styles = StyleSheet.create({
   primaryText: { color: "#fff", fontWeight: "900" },
   secondary: { backgroundColor: "#f1f5f9", borderRadius: 14, paddingVertical: 13, paddingHorizontal: 16, alignItems: "center", flex: 1 },
   secondaryText: { color: "#14213d", fontWeight: "900" },
+  shareProfile: { marginTop: 10, backgroundColor: "#ffedd5", borderRadius: 14, paddingVertical: 13, paddingHorizontal: 16, alignItems: "center" },
+  shareProfileText: { color: "#ea580c", fontWeight: "900" },
   heading: { fontSize: 20, fontWeight: "900", color: "#14213d", marginBottom: 8 },
   bullet: { color: "#334155", marginTop: 7, fontWeight: "700" },
   input: { backgroundColor: "#f1f5f9", borderRadius: 14, paddingHorizontal: 12, minHeight: 46, marginBottom: 10, fontWeight: "700" },
@@ -149,4 +173,9 @@ const styles = StyleSheet.create({
   review: { borderTopWidth: 1, borderTopColor: "#e2e8f0", paddingTop: 10, marginTop: 10 },
   reviewName: { color: "#14213d", fontWeight: "900" }
 });
+
+
+
+
+
 

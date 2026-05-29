@@ -14,11 +14,13 @@ export default function App() {
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [session, setSession] = useState<AppSession | null>(null);
   const [ownWorker, setOwnWorker] = useState<Worker | null>(null);
+  const [authRedirectPending, setAuthRedirectPending] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
+      if (event === "SIGNED_IN") setAuthRedirectPending(true);
       if (!nextSession) {
         setOwnWorker(null);
         if (screen === "dashboard" || screen === "upload" || screen === "profile") setScreen("home");
@@ -32,9 +34,18 @@ export default function App() {
       if (!session?.user.id) return;
       const profile = await getMyWorkerProfile(session.user.id);
       setOwnWorker(profile);
+      if (authRedirectPending) {
+        if (profile) {
+          setSelectedWorker(profile);
+          setScreen("profile");
+        } else {
+          setScreen("dashboard");
+        }
+        setAuthRedirectPending(false);
+      }
     }
     void loadOwnProfile();
-  }, [session?.user.id, screen]);
+  }, [session?.user.id, screen, authRedirectPending]);
 
   function openWorker(worker: Worker) {
     setSelectedWorker(worker);
@@ -71,7 +82,11 @@ export default function App() {
       <View style={styles.body}>
         {screen === "home" ? <HomeScreen onOpenWorker={openWorker} /> : null}
         {screen === "feed" ? <FeedScreen onOpenWorker={openWorker} /> : null}
-        {screen === "dashboard" ? <DashboardScreen mode="profile" onProfileSaved={(worker) => setOwnWorker(worker)} /> : null}
+        {screen === "dashboard" ? <DashboardScreen mode="profile" onProfileSaved={(worker) => {
+          setOwnWorker(worker);
+          setSelectedWorker(worker);
+          setScreen("profile");
+        }} /> : null}
         {screen === "upload" ? <DashboardScreen mode="upload" onProfileSaved={(worker) => setOwnWorker(worker)} /> : null}
         {active && selectedWorker ? <WorkerProfileScreen worker={selectedWorker} onBack={() => setScreen("home")} onEdit={showingOwnProfile ? openEditProfile : undefined} onUpload={showingOwnProfile ? openUploadFeed : undefined} /> : null}
       </View>
@@ -113,6 +128,9 @@ const styles = StyleSheet.create({
   tabText: { color: "#cbd5e1", fontWeight: "900" },
   activeTabText: { color: "#fff" }
 });
+
+
+
 
 
 
