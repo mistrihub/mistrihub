@@ -217,6 +217,15 @@ export function DashboardClient() {
     };
   }, [cropObjectUrl]);
 
+  useEffect(() => {
+    function onHeaderPanel(event: Event) {
+      const panel = (event as CustomEvent<"profile" | "upload">).detail;
+      if (panel === "profile" || panel === "upload") setActivePanel(panel);
+    }
+
+    window.addEventListener("mistrihub-dashboard-panel", onHeaderPanel);
+    return () => window.removeEventListener("mistrihub-dashboard-panel", onHeaderPanel);
+  }, []);
   function switchPanel(panel: "profile" | "upload") {
     setActivePanel(panel);
     const nextUrl = `/dashboard?panel=${panel}`;
@@ -786,10 +795,6 @@ export function DashboardClient() {
                 View public profile
               </Link>
             ) : null}
-            <button type="button" onClick={logout} className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-rose-50 text-sm font-bold text-rose-700">
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              Logout
-            </button>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
             <p className="font-bold text-ink">Status</p>
@@ -927,6 +932,7 @@ function CropSlider({
     </label>
   );
 }
+
 
 
 

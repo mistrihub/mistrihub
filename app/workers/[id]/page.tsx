@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CalendarCheck, MessageCircle, Phone, Star } from "lucide-react";
 import { ReviewSection } from "@/components/review-section";
+import { ProfileLogoutButton } from "@/components/profile-logout-button";
 import { WorkerWorkFeed } from "@/components/worker-work-feed";
 import { getReviews, getWorkerById, getWorkPosts } from "@/lib/workers";
 import { createWhatsAppUrl, formatPrice } from "@/lib/utils";
@@ -111,10 +112,12 @@ export default async function WorkerProfilePage({ params }: ProfileProps) {
         </div>
       </div>
       <WorkerWorkFeed worker={worker} posts={workPosts} />
+      <ProfileLogoutButton />
       <ReviewSection workerId={worker.id} reviews={reviews} />
     </section>
   );
 }
+
 
 
 

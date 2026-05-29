@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Pencil, UploadCloud, UserPlus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 
 type HeaderWorkerState = {
@@ -44,9 +44,22 @@ function useHeaderWorker() {
     }
 
     void loadAccount();
+    const { data } = supabase?.auth.onAuthStateChange(() => {
+      void loadAccount();
+    }) ?? { data: null };
+
+    return () => data?.subscription.unsubscribe();
   }, []);
 
   return state;
+}
+
+function openDashboardPanel(event: MouseEvent<HTMLAnchorElement>, panel: "profile" | "upload") {
+  if (window.location.pathname !== "/dashboard") return;
+  event.preventDefault();
+  const nextUrl = `/dashboard?panel=${panel}`;
+  window.history.replaceState(null, "", nextUrl);
+  window.dispatchEvent(new CustomEvent("mistrihub-dashboard-panel", { detail: panel }));
 }
 
 export function HeaderAccount() {
@@ -84,6 +97,7 @@ export function HeaderDashboardButton() {
     <div className="flex items-center gap-2">
       <Link
         href="/dashboard?panel=profile"
+        onClick={(event) => openDashboardPanel(event, "profile")}
         className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-ink transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-10"
         aria-label="Edit worker profile"
         title="Edit profile"
@@ -92,6 +106,7 @@ export function HeaderDashboardButton() {
       </Link>
       <Link
         href="/dashboard?panel=upload"
+        onClick={(event) => openDashboardPanel(event, "upload")}
         className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0 sm:h-10 sm:w-10"
         aria-label="Upload work feed"
         title="Upload feed"
@@ -101,5 +116,3 @@ export function HeaderDashboardButton() {
     </div>
   );
 }
-
-
