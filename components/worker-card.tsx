@@ -6,7 +6,7 @@ import { formatPrice } from "@/lib/utils";
 
 export function WorkerCard({ worker }: { worker: Worker }) {
   return (
-    <article className="overflow-hidden rounded-lg bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
+    <article className="relative overflow-hidden rounded-lg bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
       <Link
         href={`/workers/${worker.id}`}
         className="relative block h-48 bg-white outline-none focus-visible:outline-none focus-visible:ring-0 sm:h-52"
@@ -43,7 +43,7 @@ export function WorkerCard({ worker }: { worker: Worker }) {
         <div className="mt-5 flex justify-center">
           <Link
             href={`/workers/${worker.id}`}
-            className="inline-flex h-11 w-full max-w-48 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-0"
+            className="inline-flex h-11 w-full max-w-48 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white transition after:absolute after:inset-0 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
           >
             View profile
           </Link>
